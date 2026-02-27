@@ -22,3 +22,4 @@
 
 # Local Codex/OpenCode metadata
 .opencode/
+.ruff_cache/
