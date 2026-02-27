@@ -1,0 +1,263 @@
+\section{Training Methodologies for World Models}
+\label{sec:training}
+
+The training landscape for World Models in Embodied Artificial Intelligence has undergone a seismic shift, transitioning from simple Imitation Learning (IL) on domain-specific datasets to a sophisticated, multi-stage paradigm reminiscent of Large Language Model (LLM) training pipelines. This evolution, often referred to as the ``2026 Shift,'' is characterized by the adoption of massive-scale self-supervised pre-training, generative dynamics modeling via Flow Matching, and rigorous post-training alignment using Verifiable Rewards (RLVR). Modern training methodologies now address the tripartite challenge of: \textbf{(1) Scalable Representation Learning}, compressing high-dimensional sensory streams ($O_t$) into actionable latent states; \textbf{(2) Generative Dynamics Modeling}, predicting future world states ($S_{t+1}$) conditioned on agent interventions; and \textbf{(3) Policy Optimization}, selecting optimal actions ($A_t$) through verifiable reasoning chains rather than memorized heuristics.
+
+This section provides a comprehensive treatise on these methodologies, detailing the mathematical foundations of Flow Matching, the architectural transition from UNets to Diffusion Transformers (DiT), and the emergence of System-2 reasoning in robotic control. We structure this analysis into four primary phases: Pre-training (Representation), Generative Modeling (Dynamics), Policy Optimization (Control), and Post-Training (Alignment).
+
+\subsection{Phase I: Foundational Pre-training Objectives}
+\label{subsec:pretraining}
+
+Pre-training establishes the fundamental semantic and physical priors required for generalist operation. By reconciling the distinct statistical modalities of vision (continuous, high-dimensional), language (discrete, semantic), and action (causal, precise), pre-training enables Vision-Language-Action (VLA) models to inherit internet-scale knowledge while grounding it in physical reality.
+
+\subsubsection{Autoregressive Next-Token Prediction (NTP)}
+The dominant paradigm for early VLAs, inherited directly from LLMs, is Autoregressive Next-Token Prediction (NTP). This approach serializes the multimodal embodied experience into a unified sequence of discrete tokens. Given a trajectory history $\tau_{<t} = (o_{<t}, l, a_{<t})$, where $o$ represents observations, $l$ language instructions, and $a$ actions, the model parameters $\theta$ are optimized to maximize the conditional log-likelihood of the next token $x_t$. The general objective is defined as:
+
+\begin{equation}
+\mathcal{L}_{\text{NTP}}(\theta) = -\mathbb{E}_{\tau \sim \mathcal{D}} \left[ \sum_{t=1}^{T} \log P_{\theta}(x_t | x_{<t}, \mathcal{C}) \right]
+\end{equation}
+
+where $\mathcal{C}$ represents context or conditioning information. While effective for semantic generalization, NTP suffers from distinct limitations in the embodied domain:
+\begin{enumerate}
+    \item \textbf{Discretization Error}: Continuous action spaces must be quantized, typically into 256 or 1024 bins, leading to precision loss in high-frequency control tasks. This ``quantization noise'' can destabilize contact-rich manipulation.
+    \item \textbf{Error Accumulation}: The autoregressive nature leads to compounding errors during long-horizon rollouts, a phenomenon known as the ``delusion'' problem. If the model samples a slightly off-distribution action at $t$, the input at $t+1$ shifts further from the training distribution, leading to catastrophic divergence.
+    \item \textbf{Modality Mismatch}: Forcing continuous visual dynamics into discrete token sequences often results in inefficient utilization of model capacity. Vision tokens (e.g., from VQ-GAN) often capture high-frequency textures irrelevant to control, while missing subtle geometric cues.
+\end{enumerate}
+
+\paragraph{Case Study: Early VLA Data Mixture}
+Early large-scale VLA training pipelines exemplified the NTP approach by mixing web-scale vision-language data with robot interaction data \cite{brohan_rt-1_2023}. A common idea is co-training/co-fine-tuning with an explicit balance term $\lambda$:
+\begin{equation}
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{robot}} + \lambda \mathcal{L}_{\text{web}}
+\end{equation}
+This formulation captures the key tradeoff between retaining broad semantic priors and preserving action-valid control behavior.
+
+\subsubsection{Masked Auto-Encoding and In-Context Learning}
+Beyond NTP, Masked Auto-Encoders (MAE) have proven effective for visual representation learning. In the embodied context, VideoMAEs are trained to reconstruct masked patches of video trajectories. The loss function operates in pixel space or latent space:
+
+\begin{equation}
+\mathcal{L}_{\text{MAE}} = \sum_{i \in \mathcal{M}} \| \text{Patch}_i - \text{Reconstruct}(\text{VisiblePatches}) \|^2
+\end{equation}
+
+where $\mathcal{M}$ is the set of masked indices. This forces the model to learn spatiotemporal continuity and object permanence. When combined with language conditioning, this forms the basis of ``In-Context'' robot learning, where a model can infer a task from a few demonstration frames provided in the prompt context, without weight updates.
+
+\subsubsection{Joint Embedding and Latent Dynamics (JEPA)}
+To address the inefficiencies of pixel-space prediction, Joint Embedding Predictive Architectures (JEPA) have emerged as a powerful alternative. Unlike generative models that reconstruct input pixels, JEPA-based world models, such as DreamVLA \cite{zhang_dreamvla_2025}, optimize a feature-prediction objective in latent space. The objective is to minimize the distance between the predicted representation of a future state and the actual representation computed by a target encoder:
+
+\begin{equation}
+\mathcal{L}_{\text{JEPA}}(\theta, \phi) = \mathbb{E}_{x} \left[ \| \text{sg}(E_\phi(x_{t+k})) - P_\theta(E_\phi(x_t), a_{t:t+k}) \|^2_2 \right]
+\end{equation}
+
+where $E_\phi$ is the encoder (often updated via Exponential Moving Average, sg denotes stop-gradient), and $P_\theta$ is the predictor. This formulation forces the model to capture semantic dynamics—such as object permanence and contact events—while discarding high-frequency visual noise that is irrelevant to control. PointVLA \cite{li_pointvla_2026} and 4D-VLA \cite{zhang_4d-vla_2025} extend this to 3D representations, using spatiotemporal masking to align visual features with geometric structure. The key advantage is sample efficiency: JEPA models can learn robust dynamics from significantly fewer frames than pixel-reconstruction models, as they do not waste capacity on modeling stochastic textures.
+
+\subsection{Phase II: Generative Action and Dynamics (Flow Matching)}
+\label{subsec:action_generation}
+
+The most significant development in 2025-2026 has been the transition from Denoising Diffusion Probabilistic Models (DDPM) to Flow Matching (FM) for action generation and dynamics modeling. This shift addresses the critical latency and stability bottlenecks inherent in stochastic diffusion processes.
+
+\subsubsection{Diffusion Policies and Score Matching}
+Prior to the adoption of Flow Matching, Diffusion Policies represented the state-of-the-art. These models treat action generation as a conditional denoising process. The forward process $q(x_t|x_0)$ adds Gaussian noise to the data, while the reverse process $p_\theta(x_{t-1}|x_t)$ learns to recover the clean signal. The standard objective, often referred to as ``supervision by prediction,'' minimizes the noise prediction error.
+The forward diffusion process is typically described by a Stochastic Differential Equation (SDE):
+
+\begin{equation}
+dx = f(x, t)dt + g(t)dw
+\end{equation}
+
+where $w$ is a standard Wiener process. The reverse-time SDE, which generates samples from the data distribution, is given by:
+
+\begin{equation}
+dx = [f(x, t) - g^2(t) \nabla_x \log p_t(x)]dt + g(t) d\bar{w}
+\end{equation}
+
+The term $\nabla_x \log p_t(x)$ is the score function. A neural network $s_\theta(x, t)$ is trained to approximate this score via Denoising Score Matching:
+
+\begin{equation}
+\mathcal{L}_{\text{DSM}} = \mathbb{E}_{x_0, \epsilon \sim \mathcal{N}(0, I), t \sim \mathcal{U}(0, 1)} \left[ \| \epsilon - \epsilon_\theta(x_t, t, \mathcal{C}) \|^2 \right]
+\end{equation}
+
+where $x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1-\bar{\alpha}_t} \epsilon$. For continuous control, the Denoising Diffusion Implicit Model (DDIM) formulation allows for deterministic sampling by setting the stochastic noise term to zero during generation. However, inference remains computationally expensive, often requiring dozens of denoising steps (NFE: Number of Function Evaluations) to produce a clean action chunk. NVIDIA Cosmos \cite{wang_genie_2025} and GigaWorld \cite{team_gigaworld-0_2025} utilized this framework to model complex multi-modal distributions, effectively capturing the multi-modality of human behavior (e.g., the multiple valid ways to grasp a mug). To improve inference speed, techniques like Consistency Distillation (CD) are employed, where a student model learns to map any point on the trajectory directly to the origin $x_0$, theoretically enabling 1-step generation, though often at the cost of mode-coverage diversity.
+
+\subsubsection{Independent Conditional Flow Matching (ICFM)}
+Flow Matching (FM) simplifies the generative process by regressing a vector field that deterministically transports a prior distribution $p_0$ (e.g., standard Gaussian) to the data distribution $p_1$ via an Ordinary Differential Equation (ODE). The core innovation in models like $\pi_0$ \cite{black__0_2026} is the use of \textbf{Independent Conditional Flow Matching (ICFM)}.
+
+Unlike Diffusion, which essentially simulates a stochastic process that can be curvy and chaotic, ICFM constructs a probability path $p_t(x)$ by marginalizing over conditional paths defined between specific data points $x_1 \sim p_{\text{data}}$ and noise samples $x_0 \sim p_{\text{prior}}$. The conditional flow $u_t(x|x_1)$ is defined to follow a straight path between noise and data:
+
+\begin{equation}
+x_t = t x_1 + (1 - (1 - \sigma_{\min})t) x_0
+\end{equation}
+
+Here, $t \in [0, 1]$ acts as the interpolation parameter. Differentiating with respect to time $t$ yields the conditional vector field, which is simply the velocity of the particle moving along this straight line:
+
+\begin{equation}
+u_t(x|x_1) = \frac{x_1 - (1 - \sigma_{\min})x_0}{1 - (1 - \sigma_{\min})t}
+\end{equation}
+
+The Flow Matching objective $\mathcal{L}_{\text{CFM}}$ trains a neural network $v_\theta(x, t)$ to approximate this vector field by minimizing the expected mean squared error over the path:
+
+\begin{equation}
+\mathcal{L}_{\text{CFM}}(\theta) = \mathbb{E}_{t \sim \mathcal{U}[0,1], x_0 \sim p_0, x_1 \sim p_1} \left[ \| v_\theta(x_t, t, \mathcal{C}) - u_t(x_t|x_1) \|^2 \right]
+\end{equation}
+
+Crucially, because the target vector field $u_t(x|x_1)$ is linear and available in closed form, training is significantly more stable than score matching, which requires estimating the gradient of the log-density (a quantity that can be singular at low noise levels).
+
+\subsubsection{Comparison: ODE vs. SDE for Control}
+The deterministic nature of the Flow Matching ODE offers distinct advantages for control:
+\begin{itemize}
+    \item \textbf{Consistency}: Given the same starting noise $x_0$, the generated trajectory is always identical. This is crucial for verifying safety and stability.
+    \item \textbf{Efficiency}: ODE solvers can take larger steps than SDE solvers. $\pi_0$ typically uses 10-step Euler integration, achieving 50Hz control, whereas Diffusion often requires 50-100 steps.
+    \item \textbf{Optimal Transport}: The straight paths learned by ICFM approximate the Optimal Transport plan, minimizing the ``kinetic energy'' of the transformation, which correlates with easier learning dynamics.
+\end{itemize}
+
+\subsubsection{Optimal Transport and Rectified Flows}
+To further straighten the paths and reduce the transport cost, \textbf{Optimal Transport (OT) Conditional Flow Matching} couples $x_0$ and $x_1$ such that the total displacement is minimized. Instead of pairing random noise with random data, min-batch OT pairs samples $(x_0^i, x_1^j)$ to minimize $\sum \|x_0^i - x_1^j\|^2$. This results in trajectories that do not cross, facilitating easier learning for the network.
+Rectified Flow is a special case of this, where the model is reflowed: the generated data from a trained model is used as the $x_0$ for a second stage of training, recursively straightening the flow. $\pi_0$ utilizes a variation of these techniques to ensure that the learned vector field is smooth, allowing for large step sizes during inference.
+
+During inference, actions are generated by solving the ODE:
+\begin{equation}
+\frac{dx_t}{dt} = v_\theta(x_t, t, \mathcal{C})
+\end{equation}
+using numerical integrators like Euler (1 step) or Heun (2 steps). This formulation allows $\pi_0$ to generate high-frequency, dexterous control signals (up to 50Hz) with fewer function evaluations than comparable diffusion policies, which is critical for real-time reactivity in dynamic environments.
+
+\subsection{Phase III: Architecture Evolution}
+\label{subsec:architecture}
+
+The shift in generative objectives has been paralleled by an architectural evolution. While earlier diffusion policies relied on 1D UNets with FiLM conditioning, the field has coalesced around the \textbf{Diffusion Transformer (DiT)} as a scalable backbone for both vision and action generation.
+
+\subsubsection{Scalability of DiT}
+The DiT architecture treats all inputs---noisy action chunks, observation history, and language embeddings---as a unified sequence of tokens. This allows the model to leverage the efficient attention mechanisms of Transformers while maintaining the generative capabilities of diffusion/flow models. Unlike UNets, which have rigid downsampling/upsampling structures, DiTs scale predictably with compute and data.
+The core operation is the self-attention mechanism, which allows every token to attend to every other token:
+
+\begin{equation}
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+In the context of $\pi_0$, the VLA backbone (e.g., PaliGemma or SigLIP) acts as a massive conditional encoder, feeding semantic features into a lightweight Flow Matching head implemented as a DiT. This decoupling allows the heavy ``thinking'' components (vision and language processing) to scale independently of the high-frequency ``acting'' components. The DiT blocks typically incorporate Adaptive Layer Norm (adaLN) to inject the timestep $t$ and context embeddings $c$ directly into the normalization layers, modulating the features based on the noise level.
+
+\subsubsection{Action Tokenization: FAST and VQ-VAE}
+A critical and often overlooked component of training is action tokenization. Standard approaches typically bin continuous actions into discrete integers, which destroys high-frequency information.
+\textbf{Frequency-space Action Sequence Tokenization (FAST)} \cite{pertsch_fast_2025} addresses this by applying a Discrete Cosine Transform (DCT) to action chunks before quantization. The DCT concentrates the signal energy into low-frequency components:
+
+\begin{equation}
+X_k = \sum_{n=0}^{N-1} x_n \cos\left[\frac{\pi}{N} \left(n + \frac{1}{2}\right) k \right]
+\end{equation}
+
+This transformation allows the model to prioritize the structural aspects of motion (low frequencies) while selectively preserving the high-frequency details required for precise impacts and contact dynamics. The resulting coefficients are then quantized. FAST demonstrates that this domain-specific tokenization allows autoregressive models to match the precision of diffusion models on tasks like peg-in-hole insertion.
+Alternative approaches like \textbf{Residual VQ-VAE} (RVQ) use a hierarchy of codebooks to quantize continuous vectors with increasing precision. However, these often suffer from codebook collapse. Techniques like Finite Scalar Quantization (FSQ) alleviate this by projecting vectors into a fixed grid, removing the need for a learned codebook entirely and simplifying training stability. Recent advancements have further refined discrete action spaces. \textbf{VQ-VLA} \cite{wang_vq-vla_2025} introduces vector-quantized action tokenizers that learn a compact codebook of motion primitives. Complementing this, \textbf{NinA} \cite{tarasov_nina_2025} leverages normalizing flows to map complex action distributions into a latent Gaussian space, enabling VLA models to output continuous, multi-modal control signals without the precision loss inherent in binning.
+
+\subsubsection{Training Efficiency and Architectural Compression}
+As VLA models scale to billions of parameters, training efficiency becomes paramount. \textbf{EfficientVLA} \cite{yang_efficientvla_2025} proposes a training-free acceleration framework that identifies and prunes redundant tokens in the vision encoder during inference, achieving a 2.5x speedup with negligible performance degradation. On the training side, \textbf{MoLe-VLA} \cite{zhang_mole-vla_2025} introduces a layer-skipping mechanism that dynamically routes computation through essential transformer blocks based on the complexity of the current observation, effectively reducing the FLOPs required for learning simple pick-and-place behaviors while retaining capacity for dexterous manipulation.
+
+\subsection{Phase IV: Policy Optimization (RLVR)}
+\label{subsec:rlvr}
+
+While Imitation Learning (IL) provides a strong initialization, it is fundamentally limited by the quality of the demonstration data and the ``distribution shift'' problem. To surpass demonstration quality, many pipelines transition to Reinforcement Learning (RL). A representative trend is \textbf{Reinforcement Learning with Verifiable Rewards (RLVR)}.
+
+\subsubsection{The Necessity of Verification}
+In traditional RL, reward functions are often dense, shaped, and difficult to specify (e.g., distance to target + orientation error + torque penalty). These shaped rewards often lead to ``reward hacking,'' where the agent exploits the function without solving the task. RLVR relies on sparse, binary outcome signals that can be programmatically verified (e.g., ``is the block in the bin?'', ``is the door open?''). This aligns the optimization landscape with the true task objective rather than a proxy. The objective function maximizes the expected sum of verifiable rewards:
+
+\begin{equation}
+J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^T \gamma^t R_{\text{verify}}(s_t) \right]
+\end{equation}
+
+\subsubsection{Group Relative Policy Optimization (GRPO)}
+Applying RLVR to large VLA models introduces significant computational challenges. Standard Proximal Policy Optimization (PPO) requires maintaining a value network (Critic) and computing per-token generalized advantage estimates (GAE). This doubles the memory footprint.
+\textbf{Group Relative Policy Optimization (GRPO)}, adapted from the reasoning domain (e.g., DeepSeek-R1), eliminates the need for a critic network. Instead, it samples a group of outputs $\{o_1, o_2, ..., o_G\}$ for the same input and computes the advantage of each output relative to the group average:
+
+\begin{equation}
+A_i = \frac{R_i - \text{mean}(\{R_1, ..., R_G\})}{\text{std}(\{R_1, ..., R_G\}) + \epsilon}
+\end{equation}
+
+The policy is then updated to maximize the surrogate objective:
+
+\begin{equation}
+\mathcal{L}_{\text{GRPO}} = \frac{1}{G} \sum_{i=1}^G \min \left( \frac{\pi_\theta(o_i|q)}{\pi_{\text{old}}(o_i|q)} A_i, \text{clip}\left(\frac{\pi_\theta(o_i|q)}{\pi_{\text{old}}(o_i|q)}, 1-\epsilon, 1+\epsilon\right) A_i \right) - \beta D_{KL}(\pi_\theta || \pi_{\text{ref}})
+\end{equation}
+
+For robotics, this allows for efficient, parallelized exploration in simulation or diverse real-world batches, as seen in VLA-R1 \cite{ye_vla-r1_2025} and VLA-RL \cite{lu_vla-rl_2025}. The absence of a critic network makes GRPO particularly suitable for fine-tuning massive VLA backbones where memory is the primary constraint.
+
+\subsubsection{Outcome vs. Process Supervision}
+In reasoning LLMs, a distinction is made between Outcome-Supervised Reward Models (ORMs) and Process-Supervised Reward Models (PRMs). In robotics, this analogy holds:
+\begin{itemize}
+    \item \textbf{ORM}: Reward is given only at the end of the episode (Success/Fail). This is standard RLVR.
+    \item \textbf{PRM}: Reward is given at key checkpoints (e.g., ``grasped object'', ``lifted object'', ``aligned with bin''). PRMs provide denser signal but require more sophisticated verification logic (e.g., using vision-based success detectors or tactile feedback). Expanding the scope of reward modeling, \textbf{ReWorld} \cite{peng_reworld_2026} moves beyond scalar rewards to multi-dimensional reward modeling. By decomposing the reward signal into components---safety, efficiency, and task success---ReWorld enables the synthesis of nuanced behaviors that prioritize different objectives dynamically.
+\end{itemize}
+Recent work suggests that PRMs are essential for long-horizon tasks, as the credit assignment problem becomes intractable with pure ORMs.
+
+\subsection{Advanced RL Fine-tuning Strategies}
+\label{subsec:rl_finetuning}
+
+Beyond the foundational objectives of RLVR, recent advancements have introduced specialized fine-tuning methodologies designed to address the unique challenges of embodied learning, specifically sample efficiency, consistency, and optimization stability.
+
+\subsubsection{Exploration and Sample Efficiency}
+Efficient exploration remains a primary bottleneck for online robotic learning. \cite{savov_exploration-driven_2025} introduces exploration-driven training paradigms that intrinsically motivate agents to visit novel state-space regions, significantly reducing the data requirements for generalization. Complementing this, \cite{hu_sample-efficient_2025} proposes sample-efficient methods that leverage prioritized experience replay to maximize the utility of limited real-world interactions. STARE-VLA \cite{xu_stare-vla_2025} integrates structured exploration into the pre-training objective, allowing the model to hypothesize and test physical interactions. Furthermore, \cite{liu_--fly_2026} presents on-the-fly adaptation techniques, enabling policies to adjust to novel dynamics or kinematic constraints during deployment without catastrophic forgetting. For test-time adaptation, \textit{EVOLVE-VLA} \cite{bai_evolve-vla_2025} introduces environment feedback during inference, allowing policies to self-improve without retraining by leveraging world model predictions to guide exploration.
+
+\subsubsection{Consistency and Refinement}
+Ensuring temporal coherence in generated actions is critical for smooth control. \cite{neary_improving_2025} addresses the issue of improving VLA consistency by enforcing trajectory-level constraints rather than per-step optimization. \cite{chen_unified_2025} proposes a unified training approach that jointly optimizes for semantic understanding and kinematic precision, ensuring that high-level plans translate effectively into low-level motor commands. Similarly, \cite{julg_refined_2025} introduces refined VLA training protocols that iteratively distill successful trajectories back into the policy, smoothing out sub-optimal actions derived from noisy demonstrations.
+
+\subsubsection{Reward and Optimization}
+Novel optimization landscapes have been explored to stabilize training. \cite{sendai_leave_2025} introduces a leave-one-out training strategy to identify and mitigate the impact of conflicting demonstrations in large-scale datasets. \cite{wang_vla_2025} focuses on VLA optimization techniques that balance the competing gradients from vision and action heads, preventing modality collapse. Additionally, \cite{grover_enhancing_2025} presents methods for enhancing VLA performance through auxiliary reward shaping, guiding the agent towards robust manipulation strategies even in sparse-reward environments. Addressing the brittleness of policies under perturbation, \textbf{RobustVLA} \cite{zhang_robustvla_2025} incorporates a robustness-aware post-training phase where the agent is trained against an adversarial dynamics model, ensuring stability across varying friction and mass distributions. To mitigate the ``deadly triad'' of offline RL in flow-based models, \cite{zhang_balancing_2025} introduces a \textbf{Balancing Signal} technique that adaptively weighs the contribution of conservative value estimation against the generative likelihood, preventing the policy from exploiting out-of-distribution actions.
+
+\subsubsection{Fine-tuning Strategies}
+General purpose fine-tuning has also evolved. \cite{kim_fine-tuning_2025} provides a comprehensive analysis of fine-tuning methods for foundation models in robotics, highlighting the efficacy of parameter-efficient techniques. \cite{kazemi_learning_2024} further explores learning strategies that decouple the policy's high-level reasoning from its low-level execution, allowing for modular fine-tuning of specific skill primitives.
+
+\subsection{Phase V: Alignment and Post-Training}
+\label{subsec:alignment_post_training}
+
+Post-training alignment is essential to ensure safety, robustness, and adherence to user intent. This phase fine-tunes the pre-trained base model using high-quality, targeted data.
+
+\subsubsection{Direct Preference Optimization (DPO)}
+Direct Preference Optimization (DPO) has become the standard for aligning VLA models without the instability of RL training. Given a dataset of preference pairs $(y_w, y_l)$ where $y_w$ is the preferred trajectory (e.g., safer, smoother, or successful) and $y_l$ is the dispreferred one, DPO optimizes the policy $\pi_\theta$ directly. It leverages an analytical mapping between the reward function and the optimal policy to bypass reward modeling:
+
+\begin{equation}
+r^*(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \beta \log Z(x)
+\end{equation}
+
+Substituting this into the Bradley-Terry preference model yields the DPO loss:
+
+\begin{equation}
+\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)} \right) \right]
+\end{equation}
+
+In the context of embodiment, preferences can be derived from human feedback (RbHF - Reinforcement Learning from Human Feedback), success detectors, or even energy efficiency metrics. NORA-1.5 \cite{hung_nora-15_2025} utilizes this to align agents towards ``socially compliant'' behaviors, such as avoiding sudden movements near humans or handling fragile objects with care.
+
+\subsubsection{Sim-to-Real Distillation (VLA-RFT)}
+A major bottleneck in robotic learning is the scarcity of real-world interaction data. \textbf{VLA-RFT (Reinforced Fine-Tuning)} \cite{li_vla-rft_2025} leverages high-fidelity simulators (like Isaac Lab or ManiSkill) to generate massive amounts of successful trajectories, which are then distilled into the VLA. The process involves:
+\begin{enumerate}
+    \item \textbf{Teacher Training}: Train a specialist expert $\pi_E$ in simulation using RL with privileged state information (e.g., exact object poses, friction coefficients).
+    \item \textbf{Data Generation}: Roll out $\pi_E$ to collect a dataset $\mathcal{D}_{\text{sim}}$. This dataset contains millions of successful trajectories.
+    \item \textbf{Student Distillation}: Fine-tune the generalist VLA $\pi_\theta$ on $\mathcal{D}_{\text{sim}}$ mixed with a regularization buffer of real-world data $\mathcal{D}_{\text{real}}$.
+\end{enumerate}
+The loss function for distillation is typically a combination of behavioral cloning on the teacher's actions and a feature-matching loss to align the visual representations:
+\begin{equation}
+\mathcal{L}_{\text{distill}} = \lambda_1 \mathcal{L}_{\text{BC}}(\pi_\theta, \pi_E) + \lambda_2 \|\Phi(\text{sim\_img}) - \Phi(\text{real\_img})\|^2
+\end{equation}
+This approach effectively transfers the ``reasoning'' capabilities learned in simulation (where physics is consistent but appearance is synthetic) to the real world, utilizing the VLA's visual backbone to bridge the domain gap. Domain Randomization (varying textures, lighting, and physics params in sim) is crucial here to prevent the student from overfitting to simulation artifacts.
+
+\subsubsection{Interactive and Human-Centric Alignment}
+Beyond static preferences, \textbf{Interactive Post-Training} \cite{tan_interactive_2025} enables VLAs to query human supervisors for feedback only when model uncertainty exceeds a threshold, creating an active learning loop that maximizes data efficiency. This human-in-the-loop paradigm aligns with the \textbf{Parallels with Human Motor Learning} \cite{xiang_parallels_2026} perspective, which argues that VLA post-training should mirror the stages of human skill acquisition---progressing from coarse imitation to fine-grained motor refinement through self-correction.
+
+\subsection{Phase VI: System-2 Reasoning and Test-Time Compute}
+\label{subsec:system2}
+
+The frontier of VLA training lies in enabling ``System-2'' thinking---deliberative, slow reasoning that occurs before action execution. This contrasts with the ``System-1'' fast, reactive policies learned via standard IL.
+
+\subsubsection{Chain-of-Thought (CoT) for Action}
+Models like ACoT-VLA \cite{zhong_acot-vla_2026} explicitly generate an intermediate reasoning trace $z_{\text{thought}}$ before predicting low-level actions $a_t$. This effectively factorizes the policy:
+
+\begin{equation}
+P(a_t | o_t) = \sum_{z} P(a_t | z_{\text{thought}}, o_t) P(z_{\text{thought}} | o_t)
+\end{equation}
+
+These thoughts can represent sub-goals (``grasp the handle''), spatial constraints (``avoid the obstacle on the left''), or physics predictions (``the object is heavy, lift slowly''). Training involves supervising these thought traces using data distilled from large reasoning models (e.g., GPT-4o) or generated via self-correction loops. During inference, the model can generate multiple thought chains and select the most consistent one (Self-Consistency).
+
+\subsubsection{Test-Time Scaling in Robotics}
+Analogous to the scaling of reasoning in LLMs (e.g., o1/R1), recent work explores scaling test-time compute for robotics. By allowing the world model to perform multiple rollouts and evaluating them with a value function or verifiable reward model (MCTS-style search), the agent can improve its success rate without changing its weights.
+The effective inference compute $C_{\text{infer}}$ becomes a new scaling dimension:
+
+\begin{equation}
+\text{Performance} \propto f(N_{\text{param}}, D_{\text{train}}, C_{\text{infer}})
+\end{equation}
+
+VLA-Reasoner \cite{guo_vla-reasoner_2025} demonstrates that allocating compute to tree-search planning significantly outperforms greedy decoding in long-horizon manipulation tasks. The model builds a search tree where nodes are states and edges are actions, using a learned World Model to expand the tree and a Value Function to prune unpromising branches. This ``thinking time'' allows the robot to simulate the consequences of its actions before committing to them in the real world, crucial for safety-critical applications.
+
+\subsection{Summary of Training Evolution}
+The trajectory of training methodologies indicates a convergence of generative modeling and reinforcement learning. The ``2026 Shift'' establishes a standardized recipe: pre-train on internet-scale data with NTP/JEPA, fine-tune dynamics and control with Flow Matching and DiT, and align with RLVR and DPO. This consolidated pipeline provides the robust foundation necessary for the next generation of Generalist Embodied Agents, moving from simple mimicry to verifiable, reasoned action.

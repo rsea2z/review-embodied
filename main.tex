@@ -1,0 +1,80 @@
+\documentclass{article}
+
+% Pointing to the style file in the template directory
+\usepackage{template/arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}		% Can be removed after putting your text content
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{doi}
+\usepackage{pdflscape}        % for landscape pages (auto-rotates in PDF viewer)
+\usepackage{xltabular}       % for long tables spanning pages
+\usepackage{amsmath}         % for \text command in math mode
+
+%% Title
+\title{From Data to Dynamics: A Comprehensive Survey of Datasets and Training Paradigms for Embodied World Models}
+
+%\date{February 6, 2026}	% Here you can change the date presented in the paper title
+%\date{} 					% Or removing it
+
+\author{ \href{https://orcid.org/0009-0000-2431-7625}{\includegraphics[scale=0.06]{template/orcid.pdf}\hspace{1mm}Junjie Liu}\thanks{Use footnote for providing further
+		information about author (webpage, alternative
+		address)---\emph{not} for acknowledging funding agencies.} \\
+	School of Computer Science\\
+	Xi’an Shiyou University\\
+	Xi’an 710065, China \\
+	\texttt{202215050307@stumail.xsyu.edu.cn} \\
+	%% examples of more authors
+	\And
+	\href{https://orcid.org/0000-0000-0000-0000}{\includegraphics[scale=0.06]{template/orcid.pdf}\hspace{1mm}Elias D.~Striatum} \\
+	Department of Electrical Engineering\\
+	Mount-Sheikh University\\
+	Santa Narimana, Levand \\
+	\texttt{stariate@ee.mount-sheikh.edu} \\
+	%% \AND
+	%% Coauthor \\
+	%% Affiliation \\
+	%% Address \\
+	%% \texttt{email} \\
+}
+
+\renewcommand{\shorttitle}{\textit{arXiv} Template}
+
+%%% Add PDF metadata to help others organize their library
+%%% Once the PDF is generated, you can check the metadata with
+%%% $ pdfinfo template.pdf
+\hypersetup{
+pdftitle={Title},
+pdfsubject={cs},
+pdfauthor={Junie},
+pdfkeywords={Keys},
+}
+
+\begin{document}
+\maketitle
+
+\input{content/00_abstract.tex}
+\input{content/01_introduction.tex}
+\input{content/02_taxonomy.tex}
+\input{content/02a_literature_review.tex}
+\input{content/03_datasets.tex}
+\input{content/04_training.tex}
+\input{content/05_simulation.tex}
+\input{content/06_challenges.tex}
+\input{content/07_conclusion.tex}
+\input{content/08_tables.tex}
+% \input{content/09_appendix.tex}
+
+%Bibliography
+\bibliographystyle{unsrtnat}
+\bibliography{references}  
+
+\end{document}
