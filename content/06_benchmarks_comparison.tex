@@ -43,15 +43,19 @@ This formulation makes explicit that many published gains reflect different oper
 
 \textbf{Efficiency-focused methods} are strongest for latency-constrained and edge scenarios, where compute-aware tokenization, pruning, and adaptation directly influence viability. Their main risk is capacity loss if compression is applied without task-specific calibration \citep{pertsch_fast_2025,guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
 
-\subsection{Evidence-Backed Case Studies from Abstracts}
+\subsection{Representative Case Studies}
 
-To anchor the comparison in verifiable claims from `references-full.bib` abstracts:
+To anchor the comparison in concrete method behavior:
 \begin{itemize}
     \item \textbf{Scale-first foundation policy:} $\pi_0/\pi_{0.5}$ emphasizes heterogeneous multi-robot and multimodal co-training to improve open-world manipulation coverage \citep{black__0_2026,intelligence__05_2025}.
     \item \textbf{Deployment-first refinement:} $\pi^*_{0.6}$ (RECAP), VLA-RFT, and VLA-RL emphasize online or simulator-mediated reinforcement fine-tuning, arguing that distribution-shift robustness requires explicit post-deployment adaptation \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025}.
     \item \textbf{World-model-as-data-engine:} GigaWorld-0 and GigaBrain-0 present a synthesis view where world models are used to generate scalable embodied training data and reduce dependence on expensive physical collection \citep{team_gigaworld-0_2025,team_gigabrain-0_2025}.
     \item \textbf{Platform-level foundation world models:} Cosmos positions world foundation models as customizable infrastructure (data curation, tokenization, post-training), rather than a single monolithic policy component \citep{nvidia_cosmos_2025}.
 \end{itemize}
+
+\subsection{Historical Continuity Across Families}
+
+Current families are not isolated inventions. Foundation VLAs inherit multi-embodiment token-policy ideas from Gato, RT-1, and RoboCat \citep{reed_generalist_2022,brohan_rt-1_2023,bousmalis_robocat_2023}. World-model-guided and planner-policy hybrids extend earlier language-grounding and feasibility-constrained planning lines \citep{ahn_as_2022,huang_grounded_2023,wu_plan_2023}. Data-scaling and adaptation loops connect to BridgeData-style collection, trajectory- and code-mediated control interfaces, and lifelong skill-library designs \citep{walke_bridgedata_2023,gu_rt-trajectory_2023,liang_code_2023,wang_voyager_2023}. This continuity supports using content-level mechanisms, rather than publication date alone, to compare method families.
 
 \subsection{Observed System-Level Pattern}
 

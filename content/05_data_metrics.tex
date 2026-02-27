@@ -13,6 +13,8 @@ Recent embodied research uses four complementary data regimes:
 
 Representative resources include OpenVLA/Open-X style pipelines, DROID-scale data, and newer embodied world-model benchmarks focused on rollout quality and control relevance \citep{kim_openvla_2024,collaboration_open_2025,khazatsky_droid_2025,upadhyay_worldbench_2026,wu_what_2026}.
 
+These resources extend earlier scaling efforts in diverse ways: web-scale open-world embodied environments, large real-robot manipulation corpora, and multimodal prompt-driven simulation suites \citep{fan_minedojo_2022,walke_bridgedata_2023,jiang_vima_2023}.
+
 \textbf{Simulation-first corpora} remain the fastest path for broad pretraining and ablation-heavy development. \textbf{Interactive benchmark suites} improve comparability but can overfit to narrow task interfaces when evaluation protocols are static. \textbf{Offline robot datasets} enable large-scale behavioral priors but inherit teleoperation and sensor bias. \textbf{Real-world logs} are the only reliable source for intervention dynamics, recovery behavior, and edge-case calibration \citep{team_octo_2024,fei_libero-plus_2025,intelligence__06_2025,wu_pragmatic_2026}.
 
 \subsection{Data Curation Dimensions}
@@ -39,9 +41,9 @@ We group evaluation metrics into five families:
 
 Several recent papers explicitly report tradeoffs between closed-loop gains and compute/latency costs, making efficiency metrics first-class rather than optional \citep{pertsch_fast_2025,yang_efficientvla_2025,guan_efficient_2025,shen_efficient_2026}.
 
-\subsection{Abstract-Level Quantitative Signals}
+\subsection{Representative Quantitative Signals}
 
-Although protocols differ across papers, several abstract-reported numbers illustrate why evaluation must go beyond a single success metric:
+Although protocols differ across papers, several reported numbers illustrate why evaluation must go beyond a single success metric:
 \begin{itemize}
     \item FAST reports up to $5\times$ training-time reduction under high-frequency dexterous settings \citep{pertsch_fast_2025}.
     \item RECAP ($\pi^*_{0.6}$) reports more than doubling throughput and roughly halving failure rate on difficult tasks \citep{intelligence__06_2025}.

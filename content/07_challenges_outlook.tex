@@ -34,13 +34,13 @@ Recent post-training results indicate that online adaptation is a major performa
     \item how to prevent catastrophic forgetting during continual specialization.
 \end{itemize}
 
-\subsection{Survey Limitations}
+\subsection{Scope Boundaries}
 
-This survey focuses on embodied and decision-relevant world modeling within 2024--2026. As a result, broader non-embodied world-model literature is not comprehensively reviewed in the core analysis. We mitigate this with explicit exclusion logging and auditable citation appendices, but taxonomy boundaries in fast-moving subareas (e.g., generalized video world models later adapted to robotics) may evolve with future releases.
+This survey focuses on embodied and decision-relevant world modeling within 2024--2026. Broader non-embodied world-model literature is therefore not covered in depth in the core analysis. In fast-moving boundary areas, such as generic video world models later adapted to robotics, category boundaries will likely continue to shift as deployment evidence accumulates.
 
-\subsection{Near-Term Research Priorities (Abstract-Driven)}
+\subsection{Near-Term Research Priorities}
 
-Synthesizing recurring claims in recent abstracts, we identify three near-term priorities:
+We identify three near-term priorities:
 \begin{itemize}
     \item \textbf{Disentangled diagnostic evaluation:} shift from monolithic benchmark scores to concept-isolated physical diagnostics and reasoning-action faithfulness checks \citep{upadhyay_worldbench_2026,wu_what_2026}.
     \item \textbf{Action-world alignment under embodiment constraints:} improve coordinate-to-pixel and language-to-control alignment using geometry-aware conditioning and consistency objectives \citep{chen_bridgev2w_2026,wang_unified_2025,chen_conrft_2025}.
@@ -54,6 +54,6 @@ We expect the next phase of embodied intelligence to converge on hybrid systems 
     \item reusable foundation priors,
     \item decision-coupled world models,
     \item online adaptation under safety constraints,
-    \item auditable evaluation pipelines tied to real deployment targets.
+    \item standardized evaluation pipelines tied to real deployment targets.
 \end{itemize}
 The strongest near-term gains will likely come from better coupling between predictive modeling and actionable control feedback, while mid-term progress will depend on standardized deployment-centric evaluation and safer continual learning protocols.

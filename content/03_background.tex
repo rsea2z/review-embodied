@@ -19,6 +19,18 @@ J(\pi) = \mathbb{E}_{\pi, p}\left[\sum_{t=0}^{T}\gamma^t r(s_t, a_t)\right].
 \end{equation}
 Compared with pure simulator RL settings, deployed embodied systems must satisfy strict constraints on reaction latency, safety, action smoothness, and distribution shift under long horizons \citep{intelligence__05_2025,intelligence__06_2025,black__0_2026,wu_pragmatic_2026}.
 
+\subsection{Pre-2024 Design Motifs that Shaped Current Formulations}
+
+Several pre-2024 lines directly shaped current embodied modeling assumptions. Language-grounded planning works argued for explicit decomposition between high-level plan tokens and low-level motor execution, often with environment feedback and feasibility filters \citep{ahn_as_2022,huang_language_2022,huang_inner_2022,song_llm-planner_2023,wu_plan_2023,huang_grounded_2023}. In our notation, this motivates a latent plan variable $\xi_t$:
+\begin{equation}
+\pi(a_t \mid h_t, g)=\int \pi_{\text{low}}(a_t \mid h_t,\xi_t)\,\pi_{\text{high}}(\xi_t \mid h_t,g)\, d\xi_t,
+\end{equation}
+where $h_t$ denotes observation-action history and $g$ is the instruction or goal.
+
+In parallel, generalist and transformer-control systems showed that heterogeneous action modalities can be cast as autoregressive token prediction, spanning text, manipulation commands, and other control outputs \citep{reed_generalist_2022,brohan_rt-1_2023,chebotar_q-transformer_2023,jiang_vima_2023}. This perspective strongly influenced modern VLA design choices on action tokenization, sequence conditioning, and scaling laws.
+
+Another precursor line integrated predictive modeling and control through video or latent generation, code-mediated policies, trajectory sketches, and geometry-aware grounding \citep{wu_unleashing_2023,liang_code_2023,gu_rt-trajectory_2023,huang_voxposer_2023,nottingham_embodied_2023}. These ideas foreshadow current 2024--2026 systems that combine policy learning with explicit predictive objectives and planner-model coupling.
+
 \subsection{Latent World Models for Embodied Control}
 
 A practical world model introduces latent states $z_t$ to capture controllable scene dynamics:

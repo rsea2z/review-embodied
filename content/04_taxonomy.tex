@@ -3,11 +3,11 @@
 
 We organize recent methods along two synchronized dimensions: (i) the embodied decision stack and (ii) world-model design choices. This decomposition keeps algorithmic comparisons explicit while preserving system-level relevance.
 
-\subsection{Taxonomy Construction and Coverage}
+\subsection{Taxonomy Design Principles}
 
-Our audit marks 279 papers as in-scope (2024--2026), with a strong 2025 concentration (216 papers), followed by 2026 early-stage growth (37 papers) and a smaller 2024 transition set (26 papers). The distribution is highly skewed toward system-oriented embodied implementations: 147 papers are grouped under data/benchmark/evaluation-oriented systems, 38 under agent architecture, and 36 under planning/reasoning. In contrast, explicitly labeled world-model-core papers remain a smaller but technically influential set (16 papers), often driving ideas reused by larger VLA stacks.
+We build the taxonomy around \emph{decision coupling}, \emph{temporal modeling}, and \emph{spatial representation}, because these three choices consistently determine deployment behavior across manipulation, navigation, and driving settings. A purely architecture-centric taxonomy hides optimization targets and interface contracts; a purely task-centric taxonomy hides why similar tasks still diverge in stability, sample efficiency, and latency.
 
-This distribution motivates a coupled taxonomy rather than a single-axis classification. A purely architecture-centric taxonomy hides deployment-critical differences in data flow and optimization regime; a purely task-centric taxonomy hides why similarly scoped systems diverge in stability, sample efficiency, and compute requirements.
+This design also aligns with historical development: early rearrangement and instruction-following studies separated task definition from policy mechanism \citep{batra_rearrangement_2020,gao_dialfred_2022}; language-grounded planners emphasized high-level symbolic decomposition with feasibility checks \citep{ahn_as_2022,huang_inner_2022,wu_plan_2023}; and foundation-policy work emphasized unified token-based control with heterogeneous data \citep{reed_generalist_2022,brohan_rt-1_2023,bousmalis_robocat_2023}. The 2024--2026 systems can be interpreted as deeper integration of these once-separate axes.
 
 \subsection{Axis A: Functionality Coupling}
 
@@ -19,17 +19,17 @@ In practice, the key separator is \emph{optimization target}. Decision-coupled m
 
 The two settings are complementary rather than contradictory: many successful systems pretrain in a general-purpose regime and then switch to decision-coupled adaptation for target deployment \citep{intelligence__05_2025,intelligence__06_2025,black__0_2026,li_controlvla_2025,lu_vla-rl_2025}.
 
-\subsection{Abstract-Grounded Method Evidence}
+\subsection{Representative Method Evidence}
 
-Representative abstracts in our corpus show that recent gains are tied to explicit design decisions, not only scale.
+Representative system reports indicate that recent gains are tied to explicit design decisions, not only scale.
 \begin{itemize}
     \item \textbf{$\pi_0$ lineage:} $\pi_0$ reports flow-matching policy design on top of pretrained VLM priors and heterogeneous dexterous robot data; $\pi_{0.5}$ emphasizes heterogeneous co-training with semantic subtask signals for open-world generalization; $\pi^*_{0.6}$ introduces RECAP with demonstrations, on-policy data, and teleoperated corrections for deployment improvement \citep{black__0_2026,intelligence__05_2025,intelligence__06_2025}.
-    \item \textbf{Tokenization as a systems lever:} FAST explicitly attributes failures of naive per-dimension binning in high-frequency dexterous control and proposes DCT-based tokenization, reporting up to $5\times$ training speedups in its abstract-level claim \citep{pertsch_fast_2025}.
+    \item \textbf{Tokenization as a systems lever:} FAST explicitly attributes failures of naive per-dimension binning in high-frequency dexterous control and proposes DCT-based tokenization, reporting up to $5\times$ training speedups \citep{pertsch_fast_2025}.
     \item \textbf{Action-world co-modeling:} WorldVLA frames action generation and future image prediction as mutually beneficial in one autoregressive stack, while VLA-RFT and VLA-RL highlight RL-style fine-tuning for robustness under distribution shift \citep{cen_worldvla_2025,li_vla-rft_2025,lu_vla-rl_2025}.
     \item \textbf{Embodiment-conditioned world modeling:} BridgeV2W converts coordinate actions into pixel-aligned embodiment masks (from URDF and camera parameters) to align action control with video prediction and cross-view consistency \citep{chen_bridgev2w_2026}.
 \end{itemize}
 
-These abstract-level claims are consistent with the functionality axis: models that explicitly connect representation learning to downstream control objectives tend to report better real-world robustness than purely decoupled predictive modeling.
+These results are consistent with the functionality axis: models that explicitly connect representation learning to downstream control objectives tend to report better real-world robustness than purely decoupled predictive modeling. Similar behavior was already visible in earlier grounding-focused methods that constrained language plans with executable skills or grounded objectives \citep{ahn_as_2022,huang_grounded_2023,dasgupta_collaborating_2023}.
 
 \subsection{Axis B: Temporal Modeling}
 
@@ -58,7 +58,7 @@ From a deployment perspective:
 
 No single representation is dominant across all tasks. Systems that report robust real-world transfer commonly use representation mixtures (e.g., semantic tokens + geometric priors + low-level action heads) rather than a single latent form \citep{intelligence__05_2025,intelligence__06_2025,chen_bridgev2w_2026,zhang_vlm4vla_2026}.
 
-An additional abstract-grounded observation is that VLM quality alone is an imperfect predictor of downstream VLA behavior: VLM4VLA reports consistent benefits from VLM initialization but weak monotonicity between generic VLM capability and embodied-policy quality, reinforcing the need for embodied adaptation objectives \citep{zhang_vlm4vla_2026}.
+An additional observation is that VLM quality alone is an imperfect predictor of downstream VLA behavior: VLM4VLA reports consistent benefits from VLM initialization but weak monotonicity between generic VLM capability and embodied-policy quality, reinforcing the need for embodied adaptation objectives \citep{zhang_vlm4vla_2026}.
 
 \subsection{Embodied Pipeline Mapping}
 

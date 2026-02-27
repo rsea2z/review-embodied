@@ -65,21 +65,30 @@ def find_bib_files(tex_content: str, tex_dir: Path) -> list[Path]:
     return bib_files
 
 
-def find_sub_tex_files(tex_content: str, tex_dir: Path) -> list[Path]:
+def find_sub_tex_files(
+    tex_content: str, tex_dir: Path, project_root: Path
+) -> list[Path]:
     sub_files = []
     for pattern in INPUT_PATTERNS:
         for match in re.finditer(pattern, tex_content):
             filename = match.group(1).strip()
-            for ext in ["", ".tex"]:
-                sub_path = tex_dir / (filename + ext)
-                if sub_path.exists() and sub_path.suffix == ".tex":
-                    sub_files.append(sub_path)
+            found = False
+            for base_dir in [tex_dir, project_root]:
+                for ext in ["", ".tex"]:
+                    sub_path = (base_dir / (filename + ext)).resolve()
+                    if sub_path.exists() and sub_path.suffix == ".tex":
+                        sub_files.append(sub_path)
+                        found = True
+                        break
+                if found:
                     break
     return sub_files
 
 
 def read_tex_recursive(
-    tex_path: Path, visited: set[Path] | None = None
+    tex_path: Path,
+    project_root: Path,
+    visited: set[Path] | None = None,
 ) -> tuple[str, list[Path]]:
     if visited is None:
         visited = set()
@@ -94,8 +103,8 @@ def read_tex_recursive(
     bib_files = find_bib_files(content, tex_dir)
 
     combined_content = content
-    for sub_file in find_sub_tex_files(content, tex_dir):
-        sub_content, sub_bibs = read_tex_recursive(sub_file, visited)
+    for sub_file in find_sub_tex_files(content, tex_dir, project_root):
+        sub_content, sub_bibs = read_tex_recursive(sub_file, project_root, visited)
         combined_content += "\n" + sub_content
         bib_files.extend(sub_bibs)
 
@@ -144,7 +153,8 @@ def main():
         print(f"Error: File not found: {args.tex_file}", file=sys.stderr)
         sys.exit(1)
 
-    tex_content, bib_files = read_tex_recursive(args.tex_file)
+    root_dir = args.tex_file.resolve().parent
+    tex_content, bib_files = read_tex_recursive(args.tex_file, root_dir)
     bib_files = list(set(bib_files))
 
     if args.verbose:
