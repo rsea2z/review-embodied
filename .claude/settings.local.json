@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(python3:*)",
+      "Bash(sed:*)",
+      "Bash(comm:*)",
+      "Bash(do grep:*)"
+    ]
+  }
+}
