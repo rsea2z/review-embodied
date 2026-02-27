@@ -1,0 +1,29 @@
+\section{Open Challenges and Outlook}
+\label{sec:challenges}
+
+\subsection{Challenge 1: Long-Horizon Physical Consistency}
+
+Many systems still degrade on multi-stage tasks where small model errors accumulate into irreversible failures. Future work should prioritize physically grounded temporal constraints and intervention-aware planning objectives, not only visual realism metrics \citep{gupta_essential_2024,team_gigabrain-0_2025,wang_mechanistic_2026}.
+
+\subsection{Challenge 2: Embodiment-Aware Representation Alignment}
+
+A recurring issue is mismatch between action-space commands and visual prediction space. Approaches that inject embodiment structure (kinematics, camera geometry, contact priors) are promising but not yet standardized \citep{chen_bridgev2w_2026,guo_flowdreamer_2026,sun_geovla_2025}.
+
+\subsection{Challenge 3: Evaluation for Deployment, Not Only Benchmarks}
+
+Benchmark success remains an incomplete proxy for field reliability. The community needs shared protocols that jointly evaluate safety, recovery, intervention rate, and sustained task throughput under shift \citep{upadhyay_worldbench_2026,wu_what_2026,valle_evaluating_2025}.
+
+\subsection{Challenge 4: Data Governance and Compute Efficiency}
+
+Scaling trends improve capability but increase data, compute, and reproducibility burdens. Efficient adaptation, model compression, and transparent data curation are central for practical adoption \citep{guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
+
+\subsection{Outlook}
+
+We expect the next phase of embodied intelligence to converge on hybrid systems that combine:
+\begin{itemize}
+    \item reusable foundation priors,
+    \item decision-coupled world models,
+    \item online adaptation under safety constraints,
+    \item auditable evaluation pipelines tied to real deployment targets.
+\end{itemize}
+The strongest near-term gains will likely come from better coupling between predictive modeling and actionable control feedback.

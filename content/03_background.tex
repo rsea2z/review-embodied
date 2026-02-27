@@ -1,0 +1,73 @@
+\section{Background and Mathematical Formulation}
+\label{sec:background}
+
+\subsection{Embodied Interaction as a Partially Observable Control Process}
+
+We model embodied interaction as a partially observable Markov decision process (POMDP):
+\begin{equation}
+\mathcal{M} = (\mathcal{S}, \mathcal{A}, \mathcal{O}, p, \Omega, r, \gamma),
+\end{equation}
+where $s_t \in \mathcal{S}$ is the latent world state, $a_t \in \mathcal{A}$ is the control action, and $o_t \in \mathcal{O}$ is the observation stream (RGB, depth, force, language context, proprioception). The environment follows
+\begin{equation}
+s_{t+1} \sim p(s_{t+1}\mid s_t, a_t), \qquad
+o_t \sim \Omega(o_t \mid s_t).
+\end{equation}
+
+Embodied agents optimize discounted return
+\begin{equation}
+J(\pi) = \mathbb{E}_{\pi, p}\left[\sum_{t=0}^{T}\gamma^t r(s_t, a_t)\right].
+\end{equation}
+Compared with pure simulator RL settings, deployed embodied systems must satisfy strict constraints on reaction latency, safety, action smoothness, and distribution shift under long horizons \citep{intelligence__05_2025,intelligence__06_2025,black__0_2026,wu_pragmatic_2026}.
+
+\subsection{Latent World Models for Embodied Control}
+
+A practical world model introduces latent states $z_t$ to capture controllable scene dynamics:
+\begin{equation}
+z_t \sim q_{\phi}(z_t \mid o_{\le t}, a_{<t}), \qquad
+\hat{z}_{t+1} \sim p_{\theta}(z_{t+1} \mid z_t, a_t).
+\end{equation}
+The decoder or predictor head maps latent trajectories back to observation and task-relevant signals:
+\begin{equation}
+\hat{o}_{t+1} \sim p_{\theta}(o_{t+1}\mid \hat{z}_{t+1}), \qquad
+\hat{y}_{t+1} = g_{\psi}(\hat{z}_{t+1}),
+\end{equation}
+where $\hat{y}_{t+1}$ may denote object states, occupancy, contact events, or value estimates, depending on the downstream stack \citep{li_comprehensive_2025,fung_embodied_2025,team_gigabrain-0_2025,berg_semantic_2025}.
+
+Most implementations optimize a reconstruction-regularization-task objective:
+\begin{equation}
+\mathcal{L}
+=
+\underbrace{\mathcal{L}_{\text{obs}}}_{\text{prediction/reconstruction}}
++ \beta
+\underbrace{\mathrm{KL}\!\left[q_{\phi}(z_t\mid \cdot)\;\|\;p_{\theta}(z_t\mid z_{t-1},a_{t-1})\right]}_{\text{dynamics consistency}}
++ \lambda
+\underbrace{\mathcal{L}_{\text{task}}}_{\text{control/planning utility}}.
+\label{eq:wm-objective}
+\end{equation}
+
+The key distinction in modern embodied literature is not whether this decomposition exists, but where decision coupling is applied: end-to-end VLA policy heads, model-predictive planning over latent rollouts, hybrid actor-model loops, or offline-to-online adaptation pipelines \citep{kim_openvla_2024,li_vla-rft_2025,cen_worldvla_2025,wan_worldagen_2025,shen_efficient_2026}.
+
+\subsection{Decision Optimization with Learned Dynamics}
+
+Given a learned model, open-loop planning over horizon $H$ can be written as
+\begin{equation}
+\mathbf{a}_{t:t+H-1}^{*}
+=
+\arg\max_{\mathbf{a}_{t:t+H-1}}
+\mathbb{E}_{p_{\theta}}\!\left[
+\sum_{k=0}^{H-1}\gamma^k \hat{r}_{t+k}
+\right].
+\label{eq:planning}
+\end{equation}
+In practice, embodied systems rarely execute Eq.~\ref{eq:planning} in pure form. They combine short-horizon replanning, policy priors, and intervention signals to control compounding errors \citep{intelligence__06_2025,li_controlvla_2025,lu_vla-rl_2025,chen_conrft_2025}.
+
+\subsection{Failure Modes in the 2024--2026 Regime}
+
+Recent work repeatedly identifies three bottlenecks:
+\begin{itemize}
+    \item \textbf{Long-horizon drift:} rollout quality degrades over multi-stage tasks, especially when contact dynamics and object geometry shift.
+    \item \textbf{Representation mismatch:} action-space controls and pixel-space predictors are weakly aligned without embodiment-aware conditioning \citep{chen_bridgev2w_2026,guo_flowdreamer_2026}.
+    \item \textbf{Evaluation gaps:} pixel fidelity and short-horizon success can hide causal or physically inconsistent behavior; benchmark design is now moving toward embodied stress tests \citep{upadhyay_worldbench_2026,wu_what_2026,valle_evaluating_2025}.
+\end{itemize}
+
+These failure modes motivate the coupled taxonomy in the next section.

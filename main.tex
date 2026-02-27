@@ -3,8 +3,14 @@
 % Pointing to the style file in the template directory
 \usepackage{template/arxiv}
 
+\usepackage{iftex}
+\ifPDFTeX
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\else
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\fi
 \usepackage{hyperref}       % hyperlinks
 \usepackage{url}            % simple URL typesetting
 \usepackage{booktabs}       % professional-quality tables
@@ -20,7 +26,7 @@
 \usepackage{amsmath}         % for \text command in math mode
 
 %% Title
-\title{Review}
+\title{Embodied Intelligence and World Models: A Survey of Progress from 2024 to Early 2026}
 
 %\date{February 6, 2026}	% Here you can change the date presented in the paper title
 %\date{} 					% Or removing it
@@ -46,22 +52,33 @@
 	%% \texttt{email} \\
 }
 
-\renewcommand{\shorttitle}{\textit{arXiv} Template}
+\renewcommand{\shorttitle}{Embodied Intelligence and World Models Survey}
 
 %%% Add PDF metadata to help others organize their library
 %%% Once the PDF is generated, you can check the metadata with
 %%% $ pdfinfo template.pdf
 \hypersetup{
-pdftitle={Title},
+pdftitle={Embodied Intelligence and World Models Survey},
 pdfsubject={cs},
-pdfauthor={Junie},
-pdfkeywords={Keys},
+pdfauthor={Junjie Liu},
+pdfkeywords={embodied ai, world models, vision-language-action},
 }
 
 \begin{document}
 \maketitle
 
-% \input{content/....tex}	% Use this to include other sections of the paper
+\input{content/01_abstract.tex}
+\input{content/02_introduction.tex}
+\input{content/03_background.tex}
+\input{content/04_taxonomy.tex}
+\input{content/05_data_metrics.tex}
+\input{content/06_benchmarks_comparison.tex}
+\input{content/07_challenges_outlook.tex}
+\input{content/08_conclusion.tex}
+
+\appendix
+\input{content/appendix_a_full_coverage_tables.tex}
+\input{content/appendix_b_exclusion_audit.tex}
 
 %Bibliography
 \bibliographystyle{unsrtnat}

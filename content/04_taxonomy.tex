@@ -1,0 +1,30 @@
+\section{Coupled Taxonomy of Embodied Intelligence and World Models}
+\label{sec:taxonomy}
+
+We organize recent methods along two synchronized dimensions: (i) the embodied decision stack and (ii) world-model design choices. This decomposition keeps algorithmic comparisons explicit while preserving system-level relevance.
+
+\subsection{Axis A: Functionality Coupling}
+
+\textbf{Decision-coupled world models} are trained and evaluated for direct control impact (policy improvement, planning reliability, intervention reduction). Representative examples include online-refined VLA pipelines and world-model-guided policy optimization \citep{intelligence__06_2025,li_vla-rft_2025,zang_rlinf-vla_2025,zhu_wmpo_2025}.
+
+\textbf{General-purpose world models} prioritize broad predictive capability and transfer, then attach downstream controllers. This line includes large pretraining efforts and multimodal dynamics models used as reusable priors \citep{nvidia_cosmos_2025,team_gigabrain-0_2025,fan_wow_2026,yin_genie_2026}.
+
+\subsection{Axis B: Temporal Modeling}
+
+\textbf{Sequential rollouts} simulate future states step by step and align naturally with MPC-style control, but face compounding error over long horizons \citep{li_comprehensive_2025,fung_embodied_2025,cen_worldvla_2025}.
+
+\textbf{Global prediction} methods forecast larger trajectory segments or future differences in parallel and can improve efficiency, but require stronger structural priors to preserve causal consistency \citep{wan_worldagen_2025,mei_video_2026,wang_mechanistic_2026}.
+
+\subsection{Axis C: Spatial Representation}
+
+\textbf{Compact latent representations} support real-time control and low compute budgets. \textbf{Tokenized representations} improve multimodal alignment with language-conditioned reasoning. \textbf{Geometry-aware or rendering-aware representations} better preserve view consistency and object-level structure for manipulation and driving scenarios \citep{chen_bridgev2w_2026,li_spatial_2025,sun_geovla_2025,zhang_4d-vla_2025}.
+
+\subsection{Embodied Pipeline Mapping}
+
+Across 2024--2026 papers, we observe a recurrent template:
+\begin{enumerate}
+    \item foundation pretraining over heterogeneous robot or video data,
+    \item adaptation via task conditioning and action-space alignment,
+    \item post-training or online correction for deployment robustness.
+\end{enumerate}
+This pattern appears in VLA scaling work, benchmark-driven systems, and world-model-centered planning frameworks \citep{kim_openvla_2024,intelligence__05_2025,black__0_2026,upadhyay_worldbench_2026,wu_visual_2026}.

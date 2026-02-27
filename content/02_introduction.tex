@@ -1,0 +1,37 @@
+\section{Introduction}
+
+Embodied AI studies agents that close the full interaction loop with the physical world: sensing, state estimation, decision making, and low-level action execution under uncertainty and resource constraints. Classical task settings such as rearrangement and instruction-conditioned navigation established this closed-loop perspective early, and also highlighted the gap between benchmark success and robust real-world deployment \citep{batra_rearrangement_2020,duan_survey_2022}. Recent progress in large multimodal models, robot foundation policies, and scalable data pipelines has substantially accelerated the field \citep{brohan_rt-1_2023,bousmalis_robocat_2023,driess_palm-e_2023,kim_openvla_2024,black__0_2026}.
+
+In parallel, world models have re-emerged as a central abstraction for embodied decision making. Instead of treating policy learning as a purely reactive mapping from observations to actions, world-model methods explicitly or implicitly learn transition structure and use it for imagination, evaluation, and planning \citep{gupta_essential_2024,ding_understanding_2025,li_comprehensive_2025}. This trend is visible across robot manipulation, autonomous driving, and general multimodal control stacks, where latent rollouts, video-conditioned prediction, or hybrid generative dynamics are increasingly used to improve sample efficiency and long-horizon consistency \citep{fung_embodied_2025,wan_worldagen_2025,team_gigabrain-0_2025,chen_bridgev2w_2026}.
+
+\subsection{Scope and Inclusion Criteria}
+
+This survey covers work from \textbf{January 1, 2024 to February 27, 2026}. We adopt a strict embodied criterion: a paper is in scope when its method or benchmark directly supports closed-loop physical interaction, robot control, embodied decision making, or embodied world-modeling. Purely generic sequence modeling or non-embodied world simulation is excluded from the core set and recorded in an auditable exclusion appendix.
+
+We use two synchronized views:
+\begin{itemize}
+    \item \textbf{Embodied pipeline view:} perception, planning/reasoning, control, and adaptation.
+    \item \textbf{World-model view:} functionality (decision-coupled vs. general-purpose), temporal modeling (stepwise vs. global), and spatial representation (compact latent, tokenized, geometric, or hybrid).
+\end{itemize}
+
+This dual view is motivated by the observation that modern VLA systems blur traditional module boundaries. Many recent methods couple high-level language reasoning with low-level visuomotor control while integrating learned predictive priors to stabilize long-horizon behavior \citep{intelligence__05_2025,intelligence__06_2025,zheng_jarvis_2025,li_vla-rft_2025,cen_worldvla_2025}.
+
+\subsection{Why a New Survey Is Needed}
+
+Multiple surveys now cover embodied AI, world models, or VLA development from different angles \citep{liu_aligning_2025,liang_large_2025,lu_multimodal_2025,shao_large_2025,zhang_step_2025,fan_wow_2026,yu_survey_2026}. However, three gaps remain.
+
+First, many reviews are either broad but shallow on algorithmic coupling, or deep on world models but not tightly connected to embodied control decisions. Second, year-scale progress in 2025--2026 has changed the practical frontier quickly, including open-world VLA generalization, reinforcement-style post-training for robots, and embodied world-model benchmarks \citep{intelligence__05_2025,intelligence__06_2025,upadhyay_worldbench_2026,wu_what_2026}. Third, reproducibility in survey writing is often limited by unclear inclusion rules and incomplete citation traceability.
+
+\subsection{Contributions}
+
+This survey makes four concrete contributions:
+\begin{itemize}
+    \item We provide a \textbf{decision-oriented synthesis} of embodied intelligence and world models under a single coupled taxonomy.
+    \item We formalize a \textbf{shared learning objective} that links latent dynamics learning and downstream control optimization.
+    \item We summarize \textbf{recent advances (2024--2026)} across VLA architectures, embodied world-modeling, data/benchmark design, and policy refinement \citep{kim_openvla_2024,nvidia_gr00t_2025,nvidia_cosmos_2025,black__0_2026,mei_video_2026}.
+    \item We release an \textbf{auditable citation coverage workflow} from 318 collected references, including in-scope grouping and explicit exclusion reasons.
+\end{itemize}
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:background} introduces formal foundations and a unified notation for embodied interaction and world-model training. Section~\ref{sec:taxonomy} presents the coupled taxonomy and representative methods. Section~\ref{sec:data-metrics} summarizes data resources and evaluation protocols. Section~\ref{sec:comparison} discusses cross-family comparisons and tradeoffs. Section~\ref{sec:challenges} distills open challenges and forward-looking directions. Section~\ref{sec:conclusion} concludes.

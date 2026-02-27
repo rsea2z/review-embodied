@@ -1,0 +1,27 @@
+\section{Cross-Family Comparison and Practical Tradeoffs}
+\label{sec:comparison}
+
+Table~\ref{tab:family-comparison} summarizes high-level differences among major method families. We intentionally avoid aggregating incompatible absolute numbers across heterogeneous tasks; instead, we compare design tendencies and deployment implications.
+
+\begin{table*}[t]
+\centering
+\caption{Qualitative comparison of representative embodied AI method families (2024--2026).}
+\label{tab:family-comparison}
+\begin{tabular}{p{3.0cm}p{3.2cm}p{3.2cm}p{3.2cm}p{2.7cm}}
+\toprule
+Family & Typical Strength & Typical Limitation & Representative Works & Deployment Fit \\
+\midrule
+Foundation VLA policies & Strong instruction following, broad skill prior & Data and compute intensive; brittle OOD recovery & \citep{kim_openvla_2024,intelligence__05_2025,black__0_2026} & General-purpose manipulation \\
+World-model-guided control & Better planning signal, sample efficiency, counterfactual reasoning & Model bias and rollout drift at long horizon & \citep{cen_worldvla_2025,wan_worldagen_2025,chen_bridgev2w_2026} & Long-horizon decision tasks \\
+Post-training RL/refinement for VLAs & Improves task throughput and robustness in deployment & Requires safe data collection and intervention design & \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025} & Continuous improvement loops \\
+Efficiency-oriented compression/adaptation & Lower latency and memory cost; easier edge use & Potential capability drop if over-compressed & \citep{pertsch_fast_2025,yang_efficientvla_2025,shen_efficient_2026} & Resource-constrained systems \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Three practical tradeoffs dominate implementation decisions:
+\begin{itemize}
+    \item \textbf{Breadth vs. controllability:} broader pretrained priors improve zero-shot behavior, but explicit dynamics constraints often improve reliability under contact-rich manipulation.
+    \item \textbf{Long-horizon quality vs. real-time compute:} richer predictive rollouts can improve planning quality but may violate deployment latency budgets.
+    \item \textbf{Offline scale vs. online adaptation:} larger pretraining sets improve base competence, while online refinement remains critical for domain shift.
+\end{itemize}

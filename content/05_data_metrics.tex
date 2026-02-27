@@ -1,0 +1,31 @@
+\section{Data Resources and Evaluation Metrics}
+\label{sec:data-metrics}
+
+\subsection{Data Regimes}
+
+Recent embodied research uses four complementary data regimes:
+\begin{itemize}
+    \item \textbf{Simulation-first corpora} for scalable policy/world-model pretraining.
+    \item \textbf{Interactive benchmark suites} for closed-loop reproducibility.
+    \item \textbf{Large offline robot datasets} for foundation model initialization.
+    \item \textbf{Real-world deployment logs} for post-training and robustness analysis.
+\end{itemize}
+
+Representative resources include OpenVLA/Open-X style pipelines, DROID-scale data, and newer embodied world-model benchmarks focused on rollout quality and control relevance \citep{kim_openvla_2024,khazatsky_droid_2025,upadhyay_worldbench_2026,wu_what_2026}.
+
+\subsection{Metric Families}
+
+We group evaluation metrics into five families:
+\begin{enumerate}
+    \item \textbf{Task success and completion quality} (success rate, throughput, long-horizon completion).
+    \item \textbf{Control stability and safety} (collision, intervention, recovery latency).
+    \item \textbf{Prediction fidelity} (perceptual quality, trajectory agreement, state consistency).
+    \item \textbf{Generalization} (new scene, new object, new instruction, cross-embodiment transfer).
+    \item \textbf{Efficiency} (token/action efficiency, runtime latency, memory/compute cost).
+\end{enumerate}
+
+Several recent papers explicitly report tradeoffs between closed-loop gains and compute/latency costs, making efficiency metrics first-class rather than optional \citep{pertsch_fast_2025,yang_efficientvla_2025,guan_efficient_2025,shen_efficient_2026}.
+
+\subsection{Current Gaps}
+
+Despite progress, metric mismatch remains common: image-level prediction quality may not imply physically correct interaction outcomes, and short-horizon gains may not transfer to multi-stage tasks \citep{gupta_essential_2024,valle_evaluating_2025,wang_unified_2025}. This gap motivates evaluation protocols that jointly report dynamics realism, decision quality, and deployment behavior.
