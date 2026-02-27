@@ -19,6 +19,18 @@ In practice, the key separator is \emph{optimization target}. Decision-coupled m
 
 The two settings are complementary rather than contradictory: many successful systems pretrain in a general-purpose regime and then switch to decision-coupled adaptation for target deployment \citep{intelligence__05_2025,intelligence__06_2025,black__0_2026,li_controlvla_2025,lu_vla-rl_2025}.
 
+\subsection{Abstract-Grounded Method Evidence}
+
+Representative abstracts in our corpus show that recent gains are tied to explicit design decisions, not only scale.
+\begin{itemize}
+    \item \textbf{$\pi_0$ lineage:} $\pi_0$ reports flow-matching policy design on top of pretrained VLM priors and heterogeneous dexterous robot data; $\pi_{0.5}$ emphasizes heterogeneous co-training with semantic subtask signals for open-world generalization; $\pi^*_{0.6}$ introduces RECAP with demonstrations, on-policy data, and teleoperated corrections for deployment improvement \citep{black__0_2026,intelligence__05_2025,intelligence__06_2025}.
+    \item \textbf{Tokenization as a systems lever:} FAST explicitly attributes failures of naive per-dimension binning in high-frequency dexterous control and proposes DCT-based tokenization, reporting up to $5\times$ training speedups in its abstract-level claim \citep{pertsch_fast_2025}.
+    \item \textbf{Action-world co-modeling:} WorldVLA frames action generation and future image prediction as mutually beneficial in one autoregressive stack, while VLA-RFT and VLA-RL highlight RL-style fine-tuning for robustness under distribution shift \citep{cen_worldvla_2025,li_vla-rft_2025,lu_vla-rl_2025}.
+    \item \textbf{Embodiment-conditioned world modeling:} BridgeV2W converts coordinate actions into pixel-aligned embodiment masks (from URDF and camera parameters) to align action control with video prediction and cross-view consistency \citep{chen_bridgev2w_2026}.
+\end{itemize}
+
+These abstract-level claims are consistent with the functionality axis: models that explicitly connect representation learning to downstream control objectives tend to report better real-world robustness than purely decoupled predictive modeling.
+
 \subsection{Axis B: Temporal Modeling}
 
 \textbf{Sequential rollouts} simulate future states step by step and align naturally with MPC-style control, but face compounding error over long horizons \citep{li_comprehensive_2025,fung_embodied_2025,cen_worldvla_2025}.
@@ -45,6 +57,8 @@ From a deployment perspective:
 \end{itemize}
 
 No single representation is dominant across all tasks. Systems that report robust real-world transfer commonly use representation mixtures (e.g., semantic tokens + geometric priors + low-level action heads) rather than a single latent form \citep{intelligence__05_2025,intelligence__06_2025,chen_bridgev2w_2026,zhang_vlm4vla_2026}.
+
+An additional abstract-grounded observation is that VLM quality alone is an imperfect predictor of downstream VLA behavior: VLM4VLA reports consistent benefits from VLM initialization but weak monotonicity between generic VLM capability and embodied-policy quality, reinforcing the need for embodied adaptation objectives \citep{zhang_vlm4vla_2026}.
 
 \subsection{Embodied Pipeline Mapping}
 

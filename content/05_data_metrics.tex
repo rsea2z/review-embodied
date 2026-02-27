@@ -39,6 +39,19 @@ We group evaluation metrics into five families:
 
 Several recent papers explicitly report tradeoffs between closed-loop gains and compute/latency costs, making efficiency metrics first-class rather than optional \citep{pertsch_fast_2025,yang_efficientvla_2025,guan_efficient_2025,shen_efficient_2026}.
 
+\subsection{Abstract-Level Quantitative Signals}
+
+Although protocols differ across papers, several abstract-reported numbers illustrate why evaluation must go beyond a single success metric:
+\begin{itemize}
+    \item FAST reports up to $5\times$ training-time reduction under high-frequency dexterous settings \citep{pertsch_fast_2025}.
+    \item RECAP ($\pi^*_{0.6}$) reports more than doubling throughput and roughly halving failure rate on difficult tasks \citep{intelligence__06_2025}.
+    \item VLA-RFT reports surpassing strong supervised baselines with fewer than 400 fine-tuning steps in simulator-driven RL fine-tuning \citep{li_vla-rft_2025}.
+    \item ConRFT reports evaluation on eight real-world manipulation tasks with a unified offline+online consistency objective \citep{chen_conrft_2025}.
+    \item Valle et al.\ highlight that pure task success masks uncertainty and execution quality, motivating dedicated uncertainty and quality metrics \citep{valle_evaluating_2025}.
+\end{itemize}
+
+These signals jointly support the same conclusion: \textbf{evaluation must be multi-objective}, combining competence, reliability, and efficiency.
+
 A minimal closed-loop metric set can be formalized as:
 \begin{equation}
 \mathrm{SR}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{1}[\text{task }i\text{ succeeds}],
@@ -61,6 +74,8 @@ For reproducible and decision-relevant reporting, we recommend:
     \item documenting compute budget, control frequency, and model update policy.
 \end{itemize}
 These elements are increasingly present in recent benchmark-oriented work and should become default for embodied world-model evaluation \citep{upadhyay_worldbench_2026,wu_what_2026,wang_unified_2025}.
+
+In addition, recent diagnostic benchmarks explicitly target disentangled physical understanding. WorldBench emphasizes concept-level disambiguation rather than entangled aggregate physics tests, making failure attribution more actionable for model iteration \citep{upadhyay_worldbench_2026}.
 
 \subsection{Current Gaps}
 

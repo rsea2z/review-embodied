@@ -43,6 +43,16 @@ This formulation makes explicit that many published gains reflect different oper
 
 \textbf{Efficiency-focused methods} are strongest for latency-constrained and edge scenarios, where compute-aware tokenization, pruning, and adaptation directly influence viability. Their main risk is capacity loss if compression is applied without task-specific calibration \citep{pertsch_fast_2025,guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
 
+\subsection{Evidence-Backed Case Studies from Abstracts}
+
+To anchor the comparison in verifiable claims from `references-full.bib` abstracts:
+\begin{itemize}
+    \item \textbf{Scale-first foundation policy:} $\pi_0/\pi_{0.5}$ emphasizes heterogeneous multi-robot and multimodal co-training to improve open-world manipulation coverage \citep{black__0_2026,intelligence__05_2025}.
+    \item \textbf{Deployment-first refinement:} $\pi^*_{0.6}$ (RECAP), VLA-RFT, and VLA-RL emphasize online or simulator-mediated reinforcement fine-tuning, arguing that distribution-shift robustness requires explicit post-deployment adaptation \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025}.
+    \item \textbf{World-model-as-data-engine:} GigaWorld-0 and GigaBrain-0 present a synthesis view where world models are used to generate scalable embodied training data and reduce dependence on expensive physical collection \citep{team_gigaworld-0_2025,team_gigabrain-0_2025}.
+    \item \textbf{Platform-level foundation world models:} Cosmos positions world foundation models as customizable infrastructure (data curation, tokenization, post-training), rather than a single monolithic policy component \citep{nvidia_cosmos_2025}.
+\end{itemize}
+
 \subsection{Observed System-Level Pattern}
 
 Across recent systems, we observe a stable two-stage recipe:
