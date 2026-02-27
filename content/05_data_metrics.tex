@@ -11,7 +11,20 @@ Recent embodied research uses four complementary data regimes:
     \item \textbf{Real-world deployment logs} for post-training and robustness analysis.
 \end{itemize}
 
-Representative resources include OpenVLA/Open-X style pipelines, DROID-scale data, and newer embodied world-model benchmarks focused on rollout quality and control relevance \citep{kim_openvla_2024,khazatsky_droid_2025,upadhyay_worldbench_2026,wu_what_2026}.
+Representative resources include OpenVLA/Open-X style pipelines, DROID-scale data, and newer embodied world-model benchmarks focused on rollout quality and control relevance \citep{kim_openvla_2024,collaboration_open_2025,khazatsky_droid_2025,upadhyay_worldbench_2026,wu_what_2026}.
+
+\textbf{Simulation-first corpora} remain the fastest path for broad pretraining and ablation-heavy development. \textbf{Interactive benchmark suites} improve comparability but can overfit to narrow task interfaces when evaluation protocols are static. \textbf{Offline robot datasets} enable large-scale behavioral priors but inherit teleoperation and sensor bias. \textbf{Real-world logs} are the only reliable source for intervention dynamics, recovery behavior, and edge-case calibration \citep{team_octo_2024,fei_libero-plus_2025,intelligence__06_2025,wu_pragmatic_2026}.
+
+\subsection{Data Curation Dimensions}
+
+Beyond raw scale, we find four curation dimensions that strongly affect downstream behavior:
+\begin{enumerate}
+    \item \textbf{Embodiment diversity} (single-arm, dual-arm, mobile manipulation, driving stacks).
+    \item \textbf{Task horizon composition} (short atomic skills vs. multi-stage household workflows).
+    \item \textbf{Interaction richness} (contact-heavy manipulation, tool use, intervention events).
+    \item \textbf{Annotation granularity} (language, subgoal, proprioceptive traces, safety labels).
+\end{enumerate}
+Papers that only scale data volume without balancing these dimensions often improve headline benchmark averages but underperform in open-world deployment conditions \citep{intelligence__05_2025,intelligence__06_2025,li_vla-rft_2025,valle_evaluating_2025}.
 
 \subsection{Metric Families}
 
@@ -25,6 +38,29 @@ We group evaluation metrics into five families:
 \end{enumerate}
 
 Several recent papers explicitly report tradeoffs between closed-loop gains and compute/latency costs, making efficiency metrics first-class rather than optional \citep{pertsch_fast_2025,yang_efficientvla_2025,guan_efficient_2025,shen_efficient_2026}.
+
+A minimal closed-loop metric set can be formalized as:
+\begin{equation}
+\mathrm{SR}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{1}[\text{task }i\text{ succeeds}],
+\end{equation}
+\begin{equation}
+\mathrm{IR}=\frac{1}{N}\sum_{i=1}^{N}\frac{n_i^{\text{intervention}}}{T_i},
+\end{equation}
+\begin{equation}
+\mathrm{RTF}=\frac{\text{inference\,+\,planning time}}{\text{control horizon time}},
+\end{equation}
+where SR measures task competence, IR captures autonomy reliability, and RTF captures real-time feasibility. This triad is often more diagnostic than isolated success-rate reporting.
+
+\subsection{Evaluation Protocol Recommendations}
+
+For reproducible and decision-relevant reporting, we recommend:
+\begin{itemize}
+    \item reporting at least one metric from each family (task, safety, prediction, generalization, efficiency),
+    \item separating in-distribution and shifted-distribution performance,
+    \item reporting intervention-aware curves (success vs. allowed interventions),
+    \item documenting compute budget, control frequency, and model update policy.
+\end{itemize}
+These elements are increasingly present in recent benchmark-oriented work and should become default for embodied world-model evaluation \citep{upadhyay_worldbench_2026,wu_what_2026,wang_unified_2025}.
 
 \subsection{Current Gaps}
 

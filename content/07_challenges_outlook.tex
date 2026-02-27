@@ -5,17 +5,38 @@
 
 Many systems still degrade on multi-stage tasks where small model errors accumulate into irreversible failures. Future work should prioritize physically grounded temporal constraints and intervention-aware planning objectives, not only visual realism metrics \citep{gupta_essential_2024,team_gigabrain-0_2025,wang_mechanistic_2026}.
 
+Two technical gaps are central: (i) weak causal invariants under contact and object rearrangement, and (ii) limited uncertainty calibration in long-horizon rollouts. Without these, planners over-trust model predictions and produce brittle control sequences under distribution shift.
+
 \subsection{Challenge 2: Embodiment-Aware Representation Alignment}
 
 A recurring issue is mismatch between action-space commands and visual prediction space. Approaches that inject embodiment structure (kinematics, camera geometry, contact priors) are promising but not yet standardized \citep{chen_bridgev2w_2026,guo_flowdreamer_2026,sun_geovla_2025}.
+
+This mismatch is no longer a niche issue; it affects generalization across robot morphologies, viewpoint changes, and tool-based manipulation. A key direction is to define representation interfaces that are simultaneously planner-friendly, control-grounded, and computationally efficient.
 
 \subsection{Challenge 3: Evaluation for Deployment, Not Only Benchmarks}
 
 Benchmark success remains an incomplete proxy for field reliability. The community needs shared protocols that jointly evaluate safety, recovery, intervention rate, and sustained task throughput under shift \citep{upadhyay_worldbench_2026,wu_what_2026,valle_evaluating_2025}.
 
+In particular, evaluation suites should move from single-episode success to \emph{session-level reliability}, including repeated-task stability, failure recovery quality, and operator load over extended runtime.
+
 \subsection{Challenge 4: Data Governance and Compute Efficiency}
 
 Scaling trends improve capability but increase data, compute, and reproducibility burdens. Efficient adaptation, model compression, and transparent data curation are central for practical adoption \citep{guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
+
+Data governance is equally important: licensing, robot-operator privacy, and intervention traceability will increasingly influence which datasets can be reused for large-scale embodied pretraining.
+
+\subsection{Challenge 5: Continual Adaptation Under Safety Constraints}
+
+Recent post-training results indicate that online adaptation is a major performance driver, but safe adaptation protocols are still immature \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025}. Open questions include:
+\begin{itemize}
+    \item how to schedule exploration under hard safety budgets,
+    \item how to integrate teleoperator corrections without destabilizing pretrained priors,
+    \item how to prevent catastrophic forgetting during continual specialization.
+\end{itemize}
+
+\subsection{Survey Limitations}
+
+This survey focuses on embodied and decision-relevant world modeling within 2024--2026. As a result, broader non-embodied world-model literature is not comprehensively reviewed in the core analysis. We mitigate this with explicit exclusion logging and auditable citation appendices, but taxonomy boundaries in fast-moving subareas (e.g., generalized video world models later adapted to robotics) may evolve with future releases.
 
 \subsection{Outlook}
 
@@ -26,4 +47,4 @@ We expect the next phase of embodied intelligence to converge on hybrid systems 
     \item online adaptation under safety constraints,
     \item auditable evaluation pipelines tied to real deployment targets.
 \end{itemize}
-The strongest near-term gains will likely come from better coupling between predictive modeling and actionable control feedback.
+The strongest near-term gains will likely come from better coupling between predictive modeling and actionable control feedback, while mid-term progress will depend on standardized deployment-centric evaluation and safer continual learning protocols.

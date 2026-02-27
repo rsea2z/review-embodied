@@ -3,11 +3,21 @@
 
 We organize recent methods along two synchronized dimensions: (i) the embodied decision stack and (ii) world-model design choices. This decomposition keeps algorithmic comparisons explicit while preserving system-level relevance.
 
+\subsection{Taxonomy Construction and Coverage}
+
+Our audit marks 279 papers as in-scope (2024--2026), with a strong 2025 concentration (216 papers), followed by 2026 early-stage growth (37 papers) and a smaller 2024 transition set (26 papers). The distribution is highly skewed toward system-oriented embodied implementations: 147 papers are grouped under data/benchmark/evaluation-oriented systems, 38 under agent architecture, and 36 under planning/reasoning. In contrast, explicitly labeled world-model-core papers remain a smaller but technically influential set (16 papers), often driving ideas reused by larger VLA stacks.
+
+This distribution motivates a coupled taxonomy rather than a single-axis classification. A purely architecture-centric taxonomy hides deployment-critical differences in data flow and optimization regime; a purely task-centric taxonomy hides why similarly scoped systems diverge in stability, sample efficiency, and compute requirements.
+
 \subsection{Axis A: Functionality Coupling}
 
 \textbf{Decision-coupled world models} are trained and evaluated for direct control impact (policy improvement, planning reliability, intervention reduction). Representative examples include online-refined VLA pipelines and world-model-guided policy optimization \citep{intelligence__06_2025,li_vla-rft_2025,zang_rlinf-vla_2025,zhu_wmpo_2025}.
 
 \textbf{General-purpose world models} prioritize broad predictive capability and transfer, then attach downstream controllers. This line includes large pretraining efforts and multimodal dynamics models used as reusable priors \citep{nvidia_cosmos_2025,team_gigabrain-0_2025,fan_wow_2026,yin_genie_2026}.
+
+In practice, the key separator is \emph{optimization target}. Decision-coupled models directly optimize task-facing losses (success, intervention, or value improvement) under closed-loop rollout constraints. General-purpose models prioritize reusable predictive competence, often scaling with heterogeneous data and delaying control coupling to post-training.
+
+The two settings are complementary rather than contradictory: many successful systems pretrain in a general-purpose regime and then switch to decision-coupled adaptation for target deployment \citep{intelligence__05_2025,intelligence__06_2025,black__0_2026,li_controlvla_2025,lu_vla-rl_2025}.
 
 \subsection{Axis B: Temporal Modeling}
 
@@ -15,9 +25,26 @@ We organize recent methods along two synchronized dimensions: (i) the embodied d
 
 \textbf{Global prediction} methods forecast larger trajectory segments or future differences in parallel and can improve efficiency, but require stronger structural priors to preserve causal consistency \citep{wan_worldagen_2025,mei_video_2026,wang_mechanistic_2026}.
 
+This temporal choice can be viewed as a bias-variance-compute tradeoff. Let $\epsilon_t$ denote one-step model error in latent space. In a simplified sequential regime, rollout error can scale approximately as
+\begin{equation}
+\mathcal{E}_{t+H} \propto \sum_{k=0}^{H-1}\|\epsilon_{t+k}\|,
+\end{equation}
+which explains sensitivity in long-horizon manipulation and multi-agent traffic forecasting. Global predictors reduce iterative accumulation steps but can underfit local control-relevant transitions unless they include action- and embodiment-aware constraints \citep{chen_bridgev2w_2026,guo_flowdreamer_2026,zhou_digital_2026}.
+
+Recent hybrids combine chunk-wise global prediction with local sequential correction, effectively using coarse global proposals and fine-grained control-time refinement \citep{team_gigaworld-0_2025,shen_efficient_2026,wu_visual_2026}.
+
 \subsection{Axis C: Spatial Representation}
 
 \textbf{Compact latent representations} support real-time control and low compute budgets. \textbf{Tokenized representations} improve multimodal alignment with language-conditioned reasoning. \textbf{Geometry-aware or rendering-aware representations} better preserve view consistency and object-level structure for manipulation and driving scenarios \citep{chen_bridgev2w_2026,li_spatial_2025,sun_geovla_2025,zhang_4d-vla_2025}.
+
+From a deployment perspective:
+\begin{itemize}
+    \item \textbf{Compact latent states} are favorable when control frequency and onboard compute dominate constraints.
+    \item \textbf{Tokenized states} are favorable when semantic alignment with language and chain-of-thought style planning is critical.
+    \item \textbf{Geometry-aware states} are favorable when camera viewpoint shift, scene rearrangement, or contact geometry consistency is central.
+\end{itemize}
+
+No single representation is dominant across all tasks. Systems that report robust real-world transfer commonly use representation mixtures (e.g., semantic tokens + geometric priors + low-level action heads) rather than a single latent form \citep{intelligence__05_2025,intelligence__06_2025,chen_bridgev2w_2026,zhang_vlm4vla_2026}.
 
 \subsection{Embodied Pipeline Mapping}
 
@@ -28,3 +55,12 @@ Across 2024--2026 papers, we observe a recurrent template:
     \item post-training or online correction for deployment robustness.
 \end{enumerate}
 This pattern appears in VLA scaling work, benchmark-driven systems, and world-model-centered planning frameworks \citep{kim_openvla_2024,intelligence__05_2025,black__0_2026,upadhyay_worldbench_2026,wu_visual_2026}.
+
+To make this mapping operational, we define three interface contracts:
+\begin{itemize}
+    \item \textbf{Representation contract:} what state is shared between perception, prediction, and control.
+    \item \textbf{Temporal contract:} what horizon each module commits to and how uncertainty is propagated.
+    \item \textbf{Feedback contract:} how online corrections (human interventions, reward feedback, safety filters) update policy/model components.
+\end{itemize}
+
+These contracts clarify why many failures are \emph{interface failures}, not merely backbone failures. Two systems with similar backbone scale can show different field behavior because they differ in interface consistency across planning, control, and adaptation loops \citep{li_vla-rft_2025,wang_unified_2025,wu_what_2026}.

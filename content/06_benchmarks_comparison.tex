@@ -19,6 +19,40 @@ Efficiency-oriented compression/adaptation & Lower latency and memory cost; easi
 \end{tabular}
 \end{table*}
 
+\subsection{Comparison Protocol}
+
+To avoid misleading cross-paper claims, we compare families under a normalized decision utility view:
+\begin{equation}
+\mathcal{U}
+=
+\alpha \cdot \mathrm{SR}
+-\beta \cdot \mathrm{IR}
+-\gamma \cdot \mathrm{RTF},
+\end{equation}
+where SR is task success rate, IR is intervention rate, and RTF is real-time factor (defined in Section~\ref{sec:data-metrics}). Coefficients $(\alpha,\beta,\gamma)$ are application-specific (e.g., higher $\beta$ for safety-critical manipulation).
+
+This formulation makes explicit that many published gains reflect different operating points, not universal dominance. For example, some models maximize SR under generous compute budgets, while others trade slight SR drops for stable real-time deployment \citep{pertsch_fast_2025,yang_efficientvla_2025,shen_efficient_2026}.
+
+\subsection{Where Each Family Wins}
+
+\textbf{Foundation VLAs} are strongest when broad instruction-space generalization and rapid task onboarding are primary goals. Their weakness is often intervention-heavy recovery under compounding distribution shift \citep{kim_openvla_2024,intelligence__05_2025,black__0_2026}.
+
+\textbf{World-model-guided stacks} are strongest in long-horizon reasoning and counterfactual evaluation, particularly when explicit predictive structure can guide planning. Their weakness is representation mismatch and rollout bias when embodiment-specific constraints are weakly encoded \citep{cen_worldvla_2025,wan_worldagen_2025,chen_bridgev2w_2026,guo_flowdreamer_2026}.
+
+\textbf{Post-training RL/refinement} methods are strongest in closing deployment gaps. Notably, several reports show substantial throughput and failure-rate improvements after online or intervention-aware refinement, indicating that static imitation pretraining is no longer sufficient for robust field behavior \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025,chen_conrft_2025}.
+
+\textbf{Efficiency-focused methods} are strongest for latency-constrained and edge scenarios, where compute-aware tokenization, pruning, and adaptation directly influence viability. Their main risk is capacity loss if compression is applied without task-specific calibration \citep{pertsch_fast_2025,guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
+
+\subsection{Observed System-Level Pattern}
+
+Across recent systems, we observe a stable two-stage recipe:
+\begin{enumerate}
+    \item build a large prior (foundation VLA or general world model),
+    \item recover reliability by decision-coupled adaptation (online RL, intervention correction, or planner-policy co-training).
+\end{enumerate}
+
+This pattern appears in both robot manipulation and embodied world-model pipelines and suggests that future gains will come less from single-model scaling alone and more from adaptive closed-loop training and evaluation infrastructure \citep{team_gigaworld-0_2025,team_gigabrain-0_2025,upadhyay_worldbench_2026,wu_what_2026}.
+
 Three practical tradeoffs dominate implementation decisions:
 \begin{itemize}
     \item \textbf{Breadth vs. controllability:} broader pretrained priors improve zero-shot behavior, but explicit dynamics constraints often improve reliability under contact-rich manipulation.
