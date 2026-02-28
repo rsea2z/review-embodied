@@ -1,7 +1,6 @@
-total_entries=318
+total_entries=312
 in_scope_total=279
 time_window=2024-2026
 in_scope=279
-missing_year=3
 not_embodied_related=2
-out_of_window=34
+out_of_window=31

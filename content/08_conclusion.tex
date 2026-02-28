@@ -1,8 +1,24 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-This survey synthesized embodied AI and world-model research from 2024 to early 2026 under a coupled framework that links system-level embodied decision stacks with model-level dynamics design choices. The central conclusion is that strong embodied performance now depends on explicit coordination among representation, prediction, and control, rather than progress in any single module.
+\subsection{Recap}
 
-The technical trajectory is cumulative: pre-2024 advances in task definition, language grounding, and early generalist robot policies established the interfaces that 2024--2026 systems now optimize at scale. Recent progress therefore looks less like a paradigm replacement and more like integration of planning, world modeling, and policy adaptation into a single closed-loop training and deployment stack.
+This survey synthesized embodied AI and world-model research from 2024 to early 2026 under a coupled framework that links system-level embodied decision stacks with model-level dynamics design choices. We covered 318 papers spanning foundation VLA policies, world-model-guided control, post-training reinforcement refinement, efficiency-oriented adaptation, 3D-aware and reasoning-augmented VLAs, multi-modal sensing systems, and domain-specific applications across manipulation, driving, humanoid control, urban navigation, and gaming.
+
+The three-axis taxonomy---functionality coupling, temporal modeling, and spatial representation---provides a principled decomposition that predicts deployment behavior more faithfully than architecture-centric or application-centric classifications. Functionality coupling, in particular, emerged as the most predictive axis: systems that explicitly connect representation learning to downstream control objectives consistently report better real-world robustness than purely decoupled predictive modeling, regardless of backbone scale.
+
+\subsection{Central Finding}
+
+The central conclusion is that strong embodied performance now depends on explicit coordination among representation, prediction, and control, rather than progress in any single module. The technical trajectory is cumulative: pre-2024 advances in task definition, language grounding, and early generalist robot policies established the interfaces that 2024--2026 systems now optimize at scale. Recent progress reflects integration of planning, world modeling, and policy adaptation into a single closed-loop training and deployment stack, extending rather than replacing the interfaces established before 2024.
+
+The normalized decision utility framework (Section~\ref{sec:comparison}) and the Pareto analysis make explicit what the raw benchmark numbers often obscure: method selection is deployment-context-dependent, and there is no universally best approach. The two-stage recipe (large prior + decision-coupled adaptation) appears consistently across the strongest reported systems, suggesting that this pattern will remain dominant in the near term.
+
+\subsection{Future Outlook}
 
 Our overall reading of the current frontier is pragmatic: foundation-scale pretraining has become necessary but not sufficient. Reliable embodied intelligence increasingly requires decision-coupled post-training, representation interfaces aligned with embodiment constraints, and deployment-oriented evaluation protocols that quantify not just task completion, but sustained autonomy quality.
+
+Seven open challenges structure the path forward. Long-horizon physical consistency and embodiment-aware alignment are primarily technical challenges amenable to architectural innovation. Deployment-oriented evaluation and data governance require community coordination and infrastructure investment. Safe continual adaptation straddles the boundary between technical methods and regulatory frameworks. Multi-agent coordination and interpretability/trustworthiness represent emerging frontiers that will become increasingly central as embodied AI systems move from laboratory demonstrations to real-world deployment.
+
+\subsection{Closing Statement}
+
+The convergence of foundation-scale pretraining, efficient adaptation, world-model-guided reasoning, and deployment-oriented evaluation creates a uniquely favorable moment for embodied AI. The systems surveyed here---achieving 98\%+ success on standardized manipulation benchmarks while operating at 3B--7B parameters---demonstrate meaningful progress toward physically grounded, decision-aware intelligent agents, though substantial gaps remain before full deployment readiness. The pace of progress---from the first open-source 7B VLA in 2024 to 98\%+ success rates on standardized manipulation benchmarks in 2025---suggests that the next phase will be defined not by whether these systems work, but by how reliably, safely, and broadly they are deployed.

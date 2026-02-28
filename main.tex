@@ -25,6 +25,11 @@
 \usepackage{xltabular}       % for long tables spanning pages
 \usepackage{amsmath}         % for \text command in math mode
 
+% Landscape table width: portrait \textheight = 9in = full landscape text width.
+% Must be set outside landscape environment (lscape swaps \textwidth/\textheight inside).
+\newlength{\landscapewidth}
+\AtBeginDocument{\setlength{\landscapewidth}{\textheight}}
+
 %% Title
 \title{Embodied Intelligence and World Models: A Survey of Progress from 2024 to Early 2026}
 

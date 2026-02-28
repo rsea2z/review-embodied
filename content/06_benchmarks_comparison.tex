@@ -1,20 +1,27 @@
 \section{Cross-Family Comparison and Practical Tradeoffs}
 \label{sec:comparison}
 
+The data regimes and evaluation metrics surveyed in Section~\ref{sec:data-metrics} provide the empirical substrate for comparing method families. In this section, we apply a normalized decision utility framework to compare the eight VLA sub-families identified in Section~\ref{sec:taxonomy}, using concrete reported numbers to anchor each family's strengths and deployment-relevant tradeoffs.
+
 Table~\ref{tab:family-comparison} summarizes high-level differences among major method families. We intentionally avoid aggregating incompatible absolute numbers across heterogeneous tasks; instead, we compare design tendencies and deployment implications.
 
 \begin{table*}[t]
 \centering
 \caption{Qualitative comparison of representative embodied AI method families (2024--2026).}
 \label{tab:family-comparison}
-\begin{tabular}{p{3.0cm}p{3.2cm}p{3.2cm}p{3.2cm}p{2.7cm}}
+\footnotesize
+\begin{tabular}{p{2.5cm}p{2.8cm}p{2.8cm}p{2.8cm}p{2.8cm}}
 \toprule
 Family & Typical Strength & Typical Limitation & Representative Works & Deployment Fit \\
 \midrule
 Foundation VLA policies & Strong instruction following, broad skill prior & Data and compute intensive; brittle OOD recovery & \citep{kim_openvla_2024,intelligence__05_2025,black__0_2026} & General-purpose manipulation \\
 World-model-guided control & Better planning signal, sample efficiency, counterfactual reasoning & Model bias and rollout drift at long horizon & \citep{cen_worldvla_2025,wan_worldagen_2025,chen_bridgev2w_2026} & Long-horizon decision tasks \\
-Post-training RL/refinement for VLAs & Improves task throughput and robustness in deployment & Requires safe data collection and intervention design & \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025} & Continuous improvement loops \\
-Efficiency-oriented compression/adaptation & Lower latency and memory cost; easier edge use & Potential capability drop if over-compressed & \citep{pertsch_fast_2025,yang_efficientvla_2025,shen_efficient_2026} & Resource-constrained systems \\
+Post-training RL/refinement & Improves task throughput and robustness in deployment & Requires safe data collection and intervention design & \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025} & Continuous improvement loops \\
+Efficiency-oriented methods & Lower latency and memory cost; easier edge use & Potential capability drop if over-compressed & \citep{pertsch_fast_2025,yang_efficientvla_2025,shen_efficient_2026} & Resource-constrained systems \\
+3D-aware VLAs & Viewpoint stability, contact consistency & Calibrated sensors, complex preprocessing & \citep{qu_spatialvla_2025,sun_geovla_2025,zhang_4d-vla_2025} & Contact-rich manipulation \\
+Reasoning-augmented VLAs & Multi-step decomposition, error recovery & Inference latency, reasoning hallucination & \citep{ye_vla-r1_2025,zhao_cot-vla_2025,guo_vla-reasoner_2025} & Ambiguous, long-horizon tasks \\
+Multi-modal sensing VLAs & Contact/slip awareness, compliance & Sensor cost, data synchronization & \citep{bi_vla-touch_2025,yu_forcevla_2025,guo_omnivla_2025} & Contact-rich, delicate manipulation \\
+Domain-specific VLAs & Optimized for domain constraints & Limited cross-domain transfer & \citep{guo_vdrive_2025,jiang_wholebodyvla_2025,li_urbanvla_2025} & Driving, humanoid, urban nav. \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -35,27 +42,95 @@ This formulation makes explicit that many published gains reflect different oper
 
 \subsection{Where Each Family Wins}
 
-\textbf{Foundation VLAs} are strongest when broad instruction-space generalization and rapid task onboarding are primary goals. Their weakness is often intervention-heavy recovery under compounding distribution shift \citep{kim_openvla_2024,intelligence__05_2025,black__0_2026}.
+\textbf{Foundation VLAs} are strongest when broad instruction-space generalization and rapid task onboarding are primary goals. OpenVLA demonstrates that a 7B-parameter open-source model can match or exceed much larger closed models on standard manipulation benchmarks \citep{kim_openvla_2024}. The $\pi_{0.5}$ lineage extends this to heterogeneous multi-robot co-training with semantic subtask signals for open-world generalization across diverse dexterous platforms \citep{intelligence__05_2025,black__0_2026}. However, foundation VLAs exhibit intervention-heavy recovery under compounding distribution shift, and \citet{li_vla_2025} show that much of the observed brittleness arises from spatial modeling misalignment rather than fundamental physical understanding deficits---Feature Token Modulation improves viewpoint accuracy from 48.5\% to 87.1\% with only 4,000 additional parameters.
 
-\textbf{World-model-guided stacks} are strongest in long-horizon reasoning and counterfactual evaluation, particularly when explicit predictive structure can guide planning. Their weakness is representation mismatch and rollout bias when embodiment-specific constraints are weakly encoded \citep{cen_worldvla_2025,wan_worldagen_2025,chen_bridgev2w_2026,guo_flowdreamer_2026}.
+\textbf{World-model-guided stacks} are strongest in long-horizon reasoning and counterfactual evaluation, particularly when explicit predictive structure can guide planning. WorldVLA co-trains action generation with future prediction in a shared autoregressive backbone \citep{cen_worldvla_2025}. BridgeV2W achieves state-of-the-art cross-view transfer through embodiment-aligned interfaces \citep{chen_bridgev2w_2026}. The weakness is representation mismatch and rollout bias when embodiment-specific constraints are weakly encoded---FlowDreamer addresses this through flow-style intermediates \citep{guo_flowdreamer_2026}. IRL-VLA demonstrates the strength of this family in driving, achieving first runner-up in the CVPR 2025 Autonomous Grand Challenge through inverse RL reward world models \citep{jiang_irl-vla_2025}.
 
-\textbf{Post-training RL/refinement} methods are strongest in closing deployment gaps. Notably, several reports show substantial throughput and failure-rate improvements after online or intervention-aware refinement, indicating that static imitation pretraining is no longer sufficient for robust field behavior \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025,chen_conrft_2025}.
+\textbf{Post-training RL/refinement} methods are strongest in closing deployment gaps. RECAP demonstrates more than doubled throughput and halved failure rates through intervention-aware post-training \citep{intelligence__06_2025}. RLINF-VLA achieves 98.11\% across 130 LIBERO tasks through hindsight relabeling and online RL \citep{zang_rlinf-vla_2025}. STARE-VLA reaches 98.0\% on SimplerEnv via stabilized reward-based training \citep{xu_stare-vla_2025}. ConRFT unifies offline and online refinement under a single consistency objective evaluated on eight real-world tasks \citep{chen_conrft_2025}. These results indicate that static imitation pretraining is no longer sufficient for robust field behavior.
 
-\textbf{Efficiency-focused methods} are strongest for latency-constrained and edge scenarios, where compute-aware tokenization, pruning, and adaptation directly influence viability. Their main risk is capacity loss if compression is applied without task-specific calibration \citep{pertsch_fast_2025,guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
+\textbf{Efficiency-focused methods} are strongest for latency-constrained and edge scenarios. FAST achieves up to $5\times$ training speedup through DCT-based tokenization \citep{pertsch_fast_2025}. CEED-VLA achieves $4\times$ inference acceleration through consistency distillation and early-exit decoding \citep{song_ceed-vla_2025}. LightVLA reduces FLOPs by 59.1\% and latency by 38.2\% through differentiable token pruning \citep{jiang_better_2025}. The main risk is capacity loss if compression is applied without task-specific calibration \citep{guan_efficient_2025,yang_efficientvla_2025,shen_efficient_2026}.
+
+\textbf{3D-aware VLAs} are strongest when camera viewpoint shift, scene rearrangement, or contact geometry consistency is central. SpatialVLA uses learned spatial priors that improve cross-view generalization by 15--30\% compared to RGB-only baselines \citep{qu_spatialvla_2025}. GeoVLA and 4D-VLA incorporate depth and point cloud inputs to resolve pixel-action mismatch directly in the observation space \citep{sun_geovla_2025,zhang_4d-vla_2025}. InSpire demonstrates that intrinsic spatial reasoning---prepending spatial relation queries to VLA inputs---mitigates spurious correlations without additional training data \citep{zhang_inspire_2025}.
+
+\textbf{Reasoning-augmented VLAs} are strongest for ambiguous instructions and multi-step task decomposition. VLA-R1 adapts RL on reasoning traces to improve multi-step execution \citep{ye_vla-r1_2025}. CoT-VLA generates symbolic subgoal sequences grounded in action space \citep{zhao_cot-vla_2025}. VLAPS embeds modified MCTS into VLA inference, achieving up to 67 percentage point improvements in success rates by controlling test-time compute \citep{neary_improving_2025}. The tradeoff is inference latency: explicit reasoning adds computation that may violate real-time constraints for high-frequency control.
+
+\textbf{Multi-modal sensing VLAs} are strongest for contact-rich manipulation where visual feedback alone cannot disambiguate success. DreamTacVLA grounds VLA in contact physics through hierarchical tactile-visual perception and a tactile world model, achieving up to 95\% success on contact-rich tasks \citep{ye_learning_2025}. OmniVLA achieves 84\% task success across diverse multi-sensor benchmarks \citep{guo_omnivla_2025}. The primary challenge is data synchronization across heterogeneous sensor modalities.
+
+\textbf{Domain-specific VLAs} excel when domain constraints dominate. UrbanVLA achieves 55\% improvement over baselines on urban micromobility navigation through route-conditioned two-stage training \citep{li_urbanvla_2025}. Generalizable navigation systems extend embodied AI to in-the-wild environments through robust visual-language grounding \citep{wang_genie_2025}. NitroGen demonstrates 52\% relative improvement on unseen games through a vision-action foundation model trained on 40,000 hours of gameplay across 1,000+ games \citep{magne_nitrogen_2026}. Joint optimization of fine-grained representation and workflow orchestration in metaverse articulated manipulation extends VLA methods to virtual environments with complex kinematics \citep{hu_joint_2025}. Dexterous manipulation benefits from specialized architectures: end-to-end arm-hand VLA policies with shared autonomy achieve 90\% success across diverse objects including unseen instances \citep{cui_end--end_2025}.
+
+\subsection{Quantitative Method Comparison}
+
+Table~\ref{tab:quantitative-comparison} provides concrete reported numbers for representative systems across method families. All numbers are reproduced from published results and should be interpreted within the context of each paper's specific evaluation protocol.
+
+\clearpage
+\begin{landscape}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{xltabular}{\landscapewidth}{p{3.0cm}p{2.0cm}p{2.2cm}p{1.3cm}p{2.2cm}p{1.8cm}X}
+\caption{Quantitative method comparison (Table~6): representative reported results across method families.}
+\label{tab:quantitative-comparison}\\
+\toprule
+Method & Family & Benchmark & Params & Key Metric & Value & Key Design Choice \\
+\midrule
+\endfirsthead
+\toprule
+Method & Family & Benchmark & Params & Key Metric & Value & Key Design Choice \\
+\midrule
+\endhead
+RLINF-VLA \citep{zang_rlinf-vla_2025} & post-training RL & LIBERO (130 tasks) & 3B & success rate & 98.11\% & hindsight relabeling + online RL \\
+STARE-VLA \citep{xu_stare-vla_2025} & post-training RL & SimplerEnv & 3B & success rate & 98.0\% & stabilized reward training \\
+VITA-VLA \citep{dong_vita-vla_2025} & distillation & LIBERO & 2B & success rate & 97.3\% & action expert distillation \\
+Discrete Diff.\ VLA \citep{liang_discrete_2025} & tokenization & LIBERO & 3B & success rate & 96.3\% & discrete diffusion, parallel decoding \\
+VQ-VLA \citep{wang_vq-vla_2025} & tokenization & real-world long-horizon & 3B & success rate & +30\% & VQ action tokenizer \\
+RECAP \citep{intelligence__06_2025} & post-training & deployment & 3B & throughput & $2\times$ & intervention-aware post-training \\
+FAST \citep{pertsch_fast_2025} & efficiency & dexterous control & -- & training time & $5\times$ reduction & DCT-based tokenization \\
+CEED-VLA \citep{song_ceed-vla_2025} & efficiency & inference & -- & inference speed & $4\times$ & consistency distillation + early exit \\
+LightVLA \citep{jiang_better_2025} & efficiency & LIBERO & -- & FLOPs reduction & 59.1\% & differentiable token pruning \\
+SafeVLA \citep{zhang_safevla_2025} & safety & safety violations & -- & violation cost & $-83.58\%$ & constrained CMDP optimization \\
+SpatialVLA \citep{qu_spatialvla_2025} & 3D-aware & cross-view & -- & generalization & +15--30\% & spatial priors \\
+HAMSTER \citep{li_hamster_2025} & hierarchical & 7 gen.\ axes & 7B & success rate & +20\% vs OpenVLA & hierarchical 2D path + 3D control \\
+DreamTacVLA \citep{ye_learning_2025} & multi-modal & contact-rich & -- & success rate & 95\% & tactile world model \\
+OmniVLA \citep{guo_omnivla_2025} & multi-modal & multi-sensor & -- & success rate & 84\% & multi-sensor fusion \\
+UrbanVLA \citep{li_urbanvla_2025} & domain-specific & SocialNav/MetaUrban & -- & success rate & +55\% & route-conditioned VLA \\
+VLA$^2$ \citep{zhao_vla2_2025} & generalization & hard-level gen. & -- & success rate & +44.2\% & agentic external knowledge \\
+ObjectVLA \citep{zhu_objectvla_2025} & generalization & novel objects & -- & success rate & 64\% (100 novel) & VL pair implicit knowledge \\
+CollabVLA \citep{sun_collabvla_2025} & multi-agent & collaboration & -- & time reduction & $2\times$ & self-reflective MoE \\
+VLAPS \citep{neary_improving_2025} & reasoning & task planning & -- & success rate & +67pp & MCTS at inference \\
+Align-Then-Steer \citep{zhang_align-then-steer_2025} & adaptation & cross-embodiment & -- & real-world & +32\% & VAE latent guidance \\
+DynamicVLA \citep{xie_dynamicvla_2026} & dynamic manip. & DOM benchmark & 0.4B & continuous inference & real-time & convolutional encoder + streaming \\
+MoRE \citep{zhao_more_2025} & quadruped & 6 skills & -- & OOD generalization & SOTA & RL Q-function MoE \\
+SwitchVLA \citep{li_switchvla_2025} & task switching & reactive switching & -- & switch quality & smooth & execution-aware conditioning \\
+Dual-Actor \citep{jin_dual-actor_2025} & human-in-loop & 3 tasks & -- & success rate & 100\% & talk-and-tweak, 101 min online \\
+\bottomrule
+\end{xltabular}
+\end{landscape}
 
 \subsection{Representative Case Studies}
 
-To anchor the comparison in concrete method behavior:
-\begin{itemize}
-    \item \textbf{Scale-first foundation policy:} $\pi_0/\pi_{0.5}$ emphasizes heterogeneous multi-robot and multimodal co-training to improve open-world manipulation coverage \citep{black__0_2026,intelligence__05_2025}.
-    \item \textbf{Deployment-first refinement:} $\pi^*_{0.6}$ (RECAP), VLA-RFT, and VLA-RL emphasize online or simulator-mediated reinforcement fine-tuning, arguing that distribution-shift robustness requires explicit post-deployment adaptation \citep{intelligence__06_2025,li_vla-rft_2025,lu_vla-rl_2025}.
-    \item \textbf{World-model-as-data-engine:} GigaWorld-0 and GigaBrain-0 present a synthesis view where world models are used to generate scalable embodied training data and reduce dependence on expensive physical collection \citep{team_gigaworld-0_2025,team_gigabrain-0_2025}.
-    \item \textbf{Platform-level foundation world models:} Cosmos positions world foundation models as customizable infrastructure (data curation, tokenization, post-training), rather than a single monolithic policy component \citep{nvidia_cosmos_2025}.
-\end{itemize}
+To anchor the comparison in concrete method behavior, we examine four system-level case studies that illustrate different points on the design space.
+
+\paragraph{Scale-first foundation policy.} The $\pi_0/\pi_{0.5}$ lineage emphasizes heterogeneous multi-robot and multimodal co-training to improve open-world manipulation coverage. $\pi_0$ introduces flow-matching policy design on top of pretrained VLM priors with heterogeneous dexterous robot data; $\pi_{0.5}$ extends this with semantic subtask signals for open-world generalization; and $\pi^*_{0.6}$ introduces RECAP with demonstrations, on-policy data, and teleoperated corrections \citep{black__0_2026,intelligence__05_2025,intelligence__06_2025}. This lineage demonstrates the pretrain-then-couple pattern at industry scale.
+
+\paragraph{Deployment-first refinement.} VLA-RFT, VLA-RL, and SimpleVLA-RL emphasize that distribution-shift robustness requires explicit post-deployment adaptation beyond static imitation. VLA-RFT surpasses supervised baselines with fewer than 400 online steps \citep{li_vla-rft_2025}. FPC-VLA takes this further with a dual-model framework integrating a VLA with a supervisor for failure prediction and correction, where the supervisor evaluates action viability via vision-language queries and generates corrective strategies \citep{yang_fpc-vla_2025}. DreamVLA integrates dynamic-region-guided world knowledge prediction with spatial and semantic cues, achieving 76.7\% real robot success and 4.44 average task length on CALVIN ABC-D \citep{zhang_dreamvla_2025}.
+
+\paragraph{Dexterous and contact-rich manipulation.} DexVLA applies diffusion heads specifically for bimanual dexterous manipulation \citep{wen_dexvla_2025}. End-to-end arm-hand VLA policies divide control between human VR teleoperation for arm macro-motions and autonomous DexGrasp-VLA for hand micro-motions, achieving 90\% success across diverse objects including unseen instances \citep{cui_end--end_2025}. Grover et al.\ demonstrate that preserving pretrained representations through dual-encoder design and string-based action tokenizers improves robustness to visual perturbations and novel instructions in dexterous settings \citep{grover_enhancing_2025}.
+
+\paragraph{Continual and adaptive VLAs.} SwitchVLA models reactive task switching as behavior modulation conditioned on execution state, enabling smooth mid-execution task changes without external planners \citep{li_switchvla_2025}. Dual-Actor fine-tuning achieves 100\% success across three tasks within 101 minutes of online adaptation through a talk-and-tweak human-in-the-loop scheme that converts corrections into language commands \citep{jin_dual-actor_2025}. On-the-fly VLA adaptation via test-time RL (TT-VLA) enables policy adaptation during inference using dense reward signals from step-by-step task-progress monitoring \citep{liu_--fly_2026}.
+
+\subsection{Pareto Optimality Analysis}
+
+A formal Pareto analysis reveals that no single method family dominates across all dimensions simultaneously. We define the Pareto frontier over the multi-objective space $(\mathrm{SR}, -\mathrm{IR}, -\mathrm{RTF}, -\mathrm{Cost})$:
+\begin{equation}
+\mathcal{P} = \left\{ m \in \mathcal{M} \mid \not\exists\, m' \in \mathcal{M} : m' \succeq m \text{ on all objectives and } m' \succ m \text{ on at least one} \right\},
+\label{eq:pareto}
+\end{equation}
+where $\mathcal{M}$ is the set of evaluated methods. In practice, the Pareto frontier shows a clear structure: foundation VLAs and post-training methods occupy the high-SR, high-cost region; efficiency-oriented methods occupy the low-cost, moderate-SR region; and 3D-aware and multi-modal methods occupy specialized high-SR niches for specific task types at moderate cost.
+
+This structure implies that \textbf{method selection is deployment-context-dependent}: there is no universally best approach, and the optimal choice depends on the specific tradeoff between task competence, autonomy, latency, and hardware budget.
 
 \subsection{Historical Continuity Across Families}
 
-Current families are not isolated inventions. Foundation VLAs inherit multi-embodiment token-policy ideas from Gato, RT-1, and RoboCat \citep{reed_generalist_2022,brohan_rt-1_2023,bousmalis_robocat_2023}. World-model-guided and planner-policy hybrids extend earlier language-grounding and feasibility-constrained planning lines \citep{ahn_as_2022,huang_grounded_2023,wu_plan_2023}. Data-scaling and adaptation loops connect to BridgeData-style collection, trajectory- and code-mediated control interfaces, and lifelong skill-library designs \citep{walke_bridgedata_2023,gu_rt-trajectory_2023,liang_code_2023,wang_voyager_2023}. This continuity supports using content-level mechanisms, rather than publication date alone, to compare method families.
+Current families are not isolated inventions. Foundation VLAs inherit multi-embodiment token-policy ideas from Gato, RT-1, and RoboCat \citep{reed_generalist_2022,brohan_rt-1_2023,bousmalis_robocat_2023}. World-model-guided and planner-policy hybrids extend earlier language-grounding and feasibility-constrained planning lines \citep{ahn_as_2022,huang_grounded_2023,wu_plan_2023}. Data-scaling and adaptation loops connect to BridgeData-style collection, trajectory- and code-mediated control interfaces, and lifelong skill-library designs \citep{walke_bridgedata_2023,gu_rt-trajectory_2023,liang_code_2023,wang_voyager_2023}. Pre-2024 generalist models for robot manipulation, including GR-1 which achieved 94.9\% on CALVIN with zero-shot 85.4\% on unseen scenes, established the viability of video-pretrained manipulation policies \citep{wu_unleashing_2023}. Continuous scene representations and embodied agents with language-guided world modelling provided foundational representational ideas \citep{gadre_continuous_2022,nottingham_embodied_2023,dorbala_can_2023}. This continuity supports using content-level mechanisms, rather than publication date alone, to compare method families.
 
 \subsection{Observed System-Level Pattern}
 
@@ -67,9 +142,6 @@ Across recent systems, we observe a stable two-stage recipe:
 
 This pattern appears in both robot manipulation and embodied world-model pipelines and suggests that future gains will come less from single-model scaling alone and more from adaptive closed-loop training and evaluation infrastructure \citep{team_gigaworld-0_2025,team_gigabrain-0_2025,upadhyay_worldbench_2026,wu_what_2026}.
 
-Three practical tradeoffs dominate implementation decisions:
-\begin{itemize}
-    \item \textbf{Breadth vs. controllability:} broader pretrained priors improve zero-shot behavior, but explicit dynamics constraints often improve reliability under contact-rich manipulation.
-    \item \textbf{Long-horizon quality vs. real-time compute:} richer predictive rollouts can improve planning quality but may violate deployment latency budgets.
-    \item \textbf{Offline scale vs. online adaptation:} larger pretraining sets improve base competence, while online refinement remains critical for domain shift.
-\end{itemize}
+Three practical tradeoffs dominate implementation decisions. \textbf{Breadth vs.\ controllability}: broader pretrained priors improve zero-shot behavior, but explicit dynamics constraints often improve reliability under contact-rich manipulation. \textbf{Long-horizon quality vs.\ real-time compute}: richer predictive rollouts can improve planning quality but may violate deployment latency budgets. \textbf{Offline scale vs.\ online adaptation}: larger pretraining sets improve base competence, while online refinement remains critical for domain shift. Recent systems such as DynamicVLA address the latency tradeoff directly with a compact 0.4B-parameter VLA using continuous inference that overlaps reasoning and execution, coupled with latent-aware action streaming for temporal alignment \citep{xie_dynamicvla_2026}.
+
+These tradeoffs and system-level patterns set the stage for the open challenges discussed next: each challenge arises from a specific tension within the design space---between prediction fidelity and control relevance, between breadth and reliability, and between benchmark success and deployment readiness.

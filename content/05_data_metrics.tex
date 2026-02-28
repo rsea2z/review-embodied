@@ -1,56 +1,60 @@
 \section{Data Resources and Evaluation Metrics}
 \label{sec:data-metrics}
 
+The taxonomy in Section~\ref{sec:taxonomy} characterizes systems by their design choices; this section complements that analysis by surveying the data regimes, benchmark suites, and evaluation metrics that determine how those design choices are empirically validated.
+
 \subsection{Data Regimes}
 
-Recent embodied research uses four complementary data regimes:
-\begin{itemize}
-    \item \textbf{Simulation-first corpora} for scalable policy/world-model pretraining.
-    \item \textbf{Interactive benchmark suites} for closed-loop reproducibility.
-    \item \textbf{Large offline robot datasets} for foundation model initialization.
-    \item \textbf{Real-world deployment logs} for post-training and robustness analysis.
-\end{itemize}
+Recent embodied research relies on four complementary data regimes, each with distinct strengths, biases, and scaling properties. We discuss each regime with concrete datasets and citation coverage to make the landscape auditable.
 
-Representative resources include OpenVLA/Open-X style pipelines, DROID-scale data, and newer embodied world-model benchmarks focused on rollout quality and control relevance \citep{kim_openvla_2024,collaboration_open_2025,khazatsky_droid_2025,upadhyay_worldbench_2026,wu_what_2026}.
+\textbf{Simulation-first corpora} remain the fastest path for broad pretraining and ablation-heavy development. PhyScene provides physically interactable 3D scene synthesis for embodied AI, enabling large-scale training on contact-rich manipulation with controlled physical properties \citep{yang_physcene_2024}. The GENIE lineage---spanning foundation world modeling and comprehensive simulation platforms---provides unified environments that support policy learning, evaluation, and data generation at scale; Genie Sim 3.0 introduces LLM-powered scene generation with over 10,000 hours of synthetic data across 200+ tasks and validates zero-shot sim-to-real transfer \citep{liao_genie_2025,yin_genie_2026}. Exploration-driven generative interactive environments extend this paradigm by generating novel training scenarios through agent-driven exploration rather than hand-designed curricula \citep{savov_exploration-driven_2025}. MimicDreamer addresses the simulation-to-reality gap by aligning human demonstrations with robot-usable supervision through video diffusion and inverse kinematics, reporting a 14.7\% improvement across six manipulation tasks \citep{li_mimicdreamer_2025}.
 
-These resources extend earlier scaling efforts in diverse ways: web-scale open-world embodied environments, large real-robot manipulation corpora, and multimodal prompt-driven simulation suites \citep{fan_minedojo_2022,walke_bridgedata_2023,jiang_vima_2023}.
+\textbf{Interactive benchmark suites} improve comparability across methods but can overfit to narrow task interfaces when evaluation protocols are static. LIBERO and its extensions have emerged as central benchmarks: the original suite provides standardized manipulation tasks, while LIBERO-Plus introduces controlled perturbations across seven dimensions to expose VLA vulnerabilities---performance drops from 95\% to below 30\% under modest perturbations reveal fragility that headline numbers conceal \citep{fei_libero-plus_2025}. VLATest provides a fuzzing framework that generates robotic manipulation scenes for systematic testing, revealing that all evaluated VLA models lack robustness under confounding objects, lighting variations, and instruction mutations \citep{wang_vlatest_2025}. Eva-VLA offers the first unified framework for evaluating VLA robustness via continuous optimization across three variation domains (object 3D transformations, illumination, adversarial patches), with all variations triggering over 60\% failure rates and up to 97.8\% in long-horizon tasks \citep{liu_eva-vla_2025}. IRef-VLA provides a benchmark for interactive referential grounding with imperfect language in 3D scenes, evaluating how VLAs handle ambiguous and incomplete instructions in spatially complex environments \citep{zhang_iref-vla_2025}. For autonomous driving, DriveAction provides the first action-driven benchmark with 16,185 QA pairs from 2,610 driving scenarios organized in an action-rooted tree-structured evaluation framework \citep{hao_driveaction_2025}.
 
-\textbf{Simulation-first corpora} remain the fastest path for broad pretraining and ablation-heavy development. \textbf{Interactive benchmark suites} improve comparability but can overfit to narrow task interfaces when evaluation protocols are static. \textbf{Offline robot datasets} enable large-scale behavioral priors but inherit teleoperation and sensor bias. \textbf{Real-world logs} are the only reliable source for intervention dynamics, recovery behavior, and edge-case calibration \citep{team_octo_2024,fei_libero-plus_2025,intelligence__06_2025,wu_pragmatic_2026}.
+\textbf{Large offline robot datasets} enable large-scale behavioral priors but inherit teleoperation and sensor bias. Open X-Embodiment aggregates data from 22 robots across 21 institutions with 527 skills and 160,266 tasks in a standardized format, demonstrating positive transfer across platforms in the resulting RT-X model \citep{collaboration_open_2025}. DROID provides 76,000 trajectories and 350 hours of diverse manipulation data collected by 50 operators across 564 scenes on three continents \citep{khazatsky_droid_2025}. Octo leverages 800,000 trajectories from Open X-Embodiment for foundation policy training, demonstrating effective fine-tuning to new sensory and action spaces within hours on consumer GPUs \citep{team_octo_2024}. Scalable pretraining from human activity videos extends data availability further: \citet{li_scalable_2025} pretrain on 1 million episodes and 26 million frames from unscripted egocentric human videos, using automated holistic analysis to generate atomic-level segments with 3D hand and camera motion, yielding strong zero-shot capabilities and favorable scaling behavior.
+
+\textbf{Real-world deployment logs} are the only reliable source for intervention dynamics, recovery behavior, and edge-case calibration. The $\pi^*_{0.6}$ (RECAP) deployment pipeline explicitly collects and uses teleoperator corrections as training signal, demonstrating that intervention-aware post-training more than doubles throughput while halving failure rates \citep{intelligence__06_2025}. Galaxea provides a large-scale diverse robot behavior dataset collected in authentic environments, paired with a dual-system framework coupling VLM planning with VLA execution through a three-stage curriculum \citep{jiang_galaxea_2025}. These deployment-oriented collections complement simulation data by providing the failure modes, edge cases, and intervention patterns that simulation environments systematically underrepresent \citep{wu_pragmatic_2026}.
 
 \subsection{Data Curation Dimensions}
 
-Beyond raw scale, we find four curation dimensions that strongly affect downstream behavior:
+Beyond raw scale, four curation dimensions strongly affect downstream behavior:
 \begin{enumerate}
-    \item \textbf{Embodiment diversity} (single-arm, dual-arm, mobile manipulation, driving stacks).
-    \item \textbf{Task horizon composition} (short atomic skills vs. multi-stage household workflows).
-    \item \textbf{Interaction richness} (contact-heavy manipulation, tool use, intervention events).
-    \item \textbf{Annotation granularity} (language, subgoal, proprioceptive traces, safety labels).
+    \item \textbf{Embodiment diversity} (single-arm, dual-arm, mobile manipulation, driving stacks, humanoid whole-body).
+    \item \textbf{Task horizon composition} (short atomic skills vs.\ multi-stage household workflows vs.\ long-horizon navigation).
+    \item \textbf{Interaction richness} (contact-heavy manipulation, tool use, intervention events, deformable objects).
+    \item \textbf{Annotation granularity} (language instructions, subgoal labels, proprioceptive traces, safety annotations, pixel-level segmentations).
 \end{enumerate}
-Papers that only scale data volume without balancing these dimensions often improve headline benchmark averages but underperform in open-world deployment conditions \citep{intelligence__05_2025,intelligence__06_2025,li_vla-rft_2025,valle_evaluating_2025}.
+Papers that only scale data volume without balancing these dimensions often improve headline benchmark averages but underperform in open-world deployment conditions \citep{intelligence__05_2025,intelligence__06_2025,li_vla-rft_2025,valle_evaluating_2025}. Interleave-VLA demonstrates the value of annotation richness by introducing an automated pipeline that converts Open X-Embodiment text instructions into interleaved image-text format (210,000 episodes), achieving $2\times$ improvement in out-of-domain generalization \citep{fan_interleave-vla_2025}. Similarly, PixelVLA shows that pixel-level annotations enable finer-grained reasoning: the Pixel-160K dataset with pixel-level labels yields 10.1--17.8\% improvement over OpenVLA at only 1.5\% of pretraining cost \citep{liang_pixelvla_2025}.
+
+Data sourcing strategies increasingly leverage non-robotic sources. Beyond human demonstration data, \citet{yang_beyond_2025} propose using diffusion-based RL to generate high-quality training trajectories, achieving 81.9\% success on LIBERO---5.3\% above human-collected data and 12.6\% above Gaussian RL data. This suggests that data quality, not merely data source, is the binding constraint for foundation policy performance.
 
 \subsection{Metric Families}
 
-We group evaluation metrics into five families:
-\begin{enumerate}
-    \item \textbf{Task success and completion quality} (success rate, throughput, long-horizon completion).
-    \item \textbf{Control stability and safety} (collision, intervention, recovery latency).
-    \item \textbf{Prediction fidelity} (perceptual quality, trajectory agreement, state consistency).
-    \item \textbf{Generalization} (new scene, new object, new instruction, cross-embodiment transfer).
-    \item \textbf{Efficiency} (token/action efficiency, runtime latency, memory/compute cost).
-\end{enumerate}
+We group evaluation metrics into five families that collectively capture the diagnostic dimensions needed for deployment-relevant assessment.
 
-Several recent papers explicitly report tradeoffs between closed-loop gains and compute/latency costs, making efficiency metrics first-class rather than optional \citep{pertsch_fast_2025,yang_efficientvla_2025,guan_efficient_2025,shen_efficient_2026}.
+\textbf{Task success and completion quality} remains the most commonly reported metric family, but recent work reveals its limitations when used in isolation. Success rate (SR) aggregates task outcome into a binary signal, hiding execution quality, near-misses, and path efficiency. Long-horizon completion metrics decompose multi-stage tasks into subtask chains, revealing where policies fail---Long-VLA introduces the L-CALVIN benchmark specifically to evaluate long-horizon task chains rather than atomic skills \citep{fan_long-vla_2025}. Throughput metrics (tasks completed per unit time) are increasingly reported alongside SR to capture operational efficiency \citep{intelligence__06_2025}.
+
+\textbf{Control stability and safety} metrics quantify the agent's reliability under sustained operation. Intervention rate (IR) measures human corrections per unit time and is central to deployment viability assessment. Collision rate, recovery latency, and safety constraint violation costs are increasingly reported: SafeVLA reduces cumulative safety violation cost by 83.58\% while maintaining task success through constrained optimization \citep{zhang_safevla_2025}. Run-time analyses emphasize that inference latency itself is a safety-relevant metric, as policies that exceed real-time budgets create hazardous gaps in closed-loop control \citep{hancock_run-time_2025}.
+
+\textbf{Prediction fidelity} metrics assess the quality of world-model outputs. For video-based prediction, Fr\'echet Video Distance (FVD) and Fr\'echet Inception Distance (FID) quantify distributional similarity between generated and ground-truth sequences:
+\begin{equation}
+\mathrm{FID} = \|\mu_r - \mu_g\|^2 + \mathrm{Tr}\!\left(\Sigma_r + \Sigma_g - 2(\Sigma_r \Sigma_g)^{1/2}\right),
+\label{eq:fid}
+\end{equation}
+where $(\mu_r, \Sigma_r)$ and $(\mu_g, \Sigma_g)$ are the mean and covariance of inception features from real and generated distributions, respectively. FVD extends this to temporal sequences using video features. However, perceptual quality alone is insufficient: \citet{gupta_essential_2024} demonstrate that high FID/FVD scores can coexist with physically incorrect causal transitions, motivating concept-level evaluation that disentangles visual fidelity from dynamics correctness \citep{upadhyay_worldbench_2026,wu_what_2026}.
+
+\textbf{Generalization} metrics measure transfer across distribution shifts. We distinguish four generalization axes: new scenes (novel spatial configurations), new objects (unseen instances or categories), new instructions (paraphrased or compositionally novel commands), and cross-embodiment transfer (different robot morphologies or sensor configurations). VLA$^2$ reports 44.2\% improvement over OpenVLA on hard-level generalization by leveraging external knowledge modules for unseen concept manipulation \citep{zhao_vla2_2025}. ObjectVLA achieves 64\% success on 100 novel objects not seen during training \citep{zhu_objectvla_2025}. The generalization gap---the difference between in-distribution and shifted-distribution performance---can be formalized as:
+\begin{equation}
+\Delta_{\mathrm{gen}} = \mathrm{SR}_{\mathrm{ID}} - \mathrm{SR}_{\mathrm{OOD}},
+\label{eq:gen-gap}
+\end{equation}
+where large $\Delta_{\mathrm{gen}}$ indicates that reported benchmark performance overstates real-world capability. Recent evidence suggests that $\Delta_{\mathrm{gen}}$ often exceeds 40 percentage points for state-of-the-art VLAs under modest distribution shift \citep{fei_libero-plus_2025,liu_eva-vla_2025,pugacheva_bring_2025}.
+
+\textbf{Efficiency} metrics capture computational cost as a first-class constraint. Token and action efficiency measure the ratio of useful action tokens to total inference computation. Runtime latency must be compared against control frequency requirements: real-time factor (RTF) captures whether inference meets deployment timing budgets. Memory and compute cost determine hardware feasibility for edge deployment. CEED-VLA achieves $4\times$ inference acceleration through consistency distillation and early-exit decoding while maintaining task success \citep{song_ceed-vla_2025}. LightVLA reduces FLOPs and latency by 59.1\% and 38.2\% respectively through differentiable token pruning with 2.6\% success rate improvement \citep{jiang_better_2025}.
 
 \subsection{Representative Quantitative Signals}
 
-Although protocols differ across papers, several reported numbers illustrate why evaluation must go beyond a single success metric:
-\begin{itemize}
-    \item FAST reports up to $5\times$ training-time reduction under high-frequency dexterous settings \citep{pertsch_fast_2025}.
-    \item RECAP ($\pi^*_{0.6}$) reports more than doubling throughput and roughly halving failure rate on difficult tasks \citep{intelligence__06_2025}.
-    \item VLA-RFT reports surpassing strong supervised baselines with fewer than 400 fine-tuning steps in simulator-driven RL fine-tuning \citep{li_vla-rft_2025}.
-    \item ConRFT reports evaluation on eight real-world manipulation tasks with a unified offline+online consistency objective \citep{chen_conrft_2025}.
-    \item Valle et al.\ highlight that pure task success masks uncertainty and execution quality, motivating dedicated uncertainty and quality metrics \citep{valle_evaluating_2025}.
-\end{itemize}
+Although protocols differ across papers, concrete reported numbers illustrate why evaluation must go beyond a single success metric. FAST reports up to $5\times$ training-time reduction under high-frequency dexterous settings through DCT-based action tokenization \citep{pertsch_fast_2025}. RECAP ($\pi^*_{0.6}$) more than doubles throughput and roughly halves failure rate on difficult tasks through intervention-aware post-training \citep{intelligence__06_2025}. VLA-RFT surpasses strong supervised baselines with fewer than 400 fine-tuning steps in simulator-driven RL \citep{li_vla-rft_2025}. RLINF-VLA achieves 98.11\% task success across 130 LIBERO tasks \citep{zang_rlinf-vla_2025}. VITA-VLA reaches 97.3\% on LIBERO through efficient distillation from pretrained action experts \citep{dong_vita-vla_2025}. ConRFT demonstrates evaluation on eight real-world manipulation tasks with a unified offline+online consistency objective \citep{chen_conrft_2025}. \citet{valle_evaluating_2025} highlight that pure task success masks uncertainty and execution quality, motivating dedicated uncertainty and quality metrics.
 
 These signals jointly support the same conclusion: \textbf{evaluation must be multi-objective}, combining competence, reliability, and efficiency.
 
@@ -66,19 +70,51 @@ A minimal closed-loop metric set can be formalized as:
 \end{equation}
 where SR measures task competence, IR captures autonomy reliability, and RTF captures real-time feasibility. This triad is often more diagnostic than isolated success-rate reporting.
 
+\subsection{Dataset and Benchmark Catalog}
+
+Table~\ref{tab:dataset-benchmark-catalog} provides a structured overview of major datasets and benchmarks used across the 2024--2026 embodied AI literature.
+
+\begin{table*}[t]
+\centering
+\caption{Dataset and benchmark catalog (Table~5): representative data resources for embodied AI (2024--2026).}
+\label{tab:dataset-benchmark-catalog}
+\footnotesize
+\begin{tabular}{p{3.0cm}p{1.5cm}p{2.0cm}p{1.8cm}p{1.5cm}p{4.5cm}}
+\toprule
+Resource & Year & Type & Domain & Scale & Key Feature \\
+\midrule
+Open X-Embodiment \citep{collaboration_open_2025} & 2024 & offline dataset & multi-robot & 160k tasks & 22 robots, 21 institutions, standardized format \\
+DROID \citep{khazatsky_droid_2025} & 2025 & offline dataset & manipulation & 76k trajs & 564 scenes, 50 operators, 3 continents \\
+LIBERO \citep{fei_libero-plus_2025} & 2024 & benchmark & manipulation & 130 tasks & standardized evaluation suite \\
+LIBERO-Plus \citep{fei_libero-plus_2025} & 2025 & robustness bench. & manipulation & 7 perturbation axes & systematic vulnerability analysis \\
+VLATest \citep{wang_vlatest_2025} & 2025 & testing framework & manipulation & 7 VLA models & fuzzing-based robustness evaluation \\
+Eva-VLA \citep{liu_eva-vla_2025} & 2025 & robustness bench. & manipulation & 3 variation domains & continuous optimization for physical variations \\
+WorldBench \citep{upadhyay_worldbench_2026} & 2026 & diagnostic bench. & world models & concept-level & disentangled physical understanding \\
+PhyScene \citep{yang_physcene_2024} & 2024 & simulation & embodied AI & large-scale & physically interactable 3D synthesis \\
+Genie Sim 3.0 \citep{yin_genie_2026} & 2026 & simulation & humanoid & 10k+ hours & LLM-powered scene generation, sim-to-real \\
+Genie Envisioner \citep{liao_genie_2025} & 2025 & platform & manipulation & EWMBench & unified WM platform: policy, eval, sim \\
+DriveAction \citep{hao_driveaction_2025} & 2025 & benchmark & driving & 16k QA pairs & action-driven tree-structured evaluation \\
+Galaxea \citep{jiang_galaxea_2025} & 2025 & offline dataset & multi-task & large-scale & authentic environments, G0 dual-system \\
+DOM \citep{xie_dynamicvla_2026} & 2026 & benchmark & dynamic manip. & 200k syn.+2k real & dynamic object manipulation \\
+L-CALVIN \citep{fan_long-vla_2025} & 2025 & benchmark & long-horizon & multi-stage & long-horizon task chain evaluation \\
+Pixel-160K \citep{liang_pixelvla_2025} & 2025 & annotation set & manipulation & 160k & pixel-level annotations for VLA \\
+NitroGen dataset \citep{magne_nitrogen_2026} & 2026 & game dataset & gaming & 40k hours & 1000+ games, auto action extraction \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 \subsection{Evaluation Protocol Recommendations}
 
-For reproducible and decision-relevant reporting, we recommend:
-\begin{itemize}
-    \item reporting at least one metric from each family (task, safety, prediction, generalization, efficiency),
-    \item separating in-distribution and shifted-distribution performance,
-    \item reporting intervention-aware curves (success vs. allowed interventions),
-    \item documenting compute budget, control frequency, and model update policy.
-\end{itemize}
-These elements are increasingly present in recent benchmark-oriented work and should become default for embodied world-model evaluation \citep{upadhyay_worldbench_2026,wu_what_2026,wang_unified_2025}.
+For reproducible and decision-relevant reporting, we recommend that embodied AI papers adopt a minimal reporting standard. First, at least one metric from each family (task success, control stability, prediction fidelity, generalization, efficiency) should be reported to prevent single-metric optimization from hiding deployment-critical weaknesses. Second, in-distribution and shifted-distribution performance should be separated, since the generalization gap $\Delta_{\mathrm{gen}}$ (Eq.~\ref{eq:gen-gap}) is often the most informative signal for deployment readiness. Third, intervention-aware curves---plotting success rate against the number of allowed human interventions---should replace binary success reporting, as they reveal the autonomy frontier more clearly than aggregate numbers. Fourth, compute budget, control frequency, and model update policy should be documented to enable fair cross-method comparison under resource constraints.
 
-In addition, recent diagnostic benchmarks explicitly target disentangled physical understanding. WorldBench emphasizes concept-level disambiguation rather than entangled aggregate physics tests, making failure attribution more actionable for model iteration \citep{upadhyay_worldbench_2026}.
+These elements are increasingly present in recent benchmark-oriented work and should become default for embodied world-model evaluation \citep{upadhyay_worldbench_2026,wu_what_2026,wang_unified_2025}. WorldBench exemplifies this direction by emphasizing concept-level disambiguation rather than entangled aggregate physics tests, making failure attribution more actionable for model iteration \citep{upadhyay_worldbench_2026}. The VLATest fuzzing framework complements static benchmarks by generating adversarial evaluation scenarios that probe specific failure modes \citep{wang_vlatest_2025}.
+
+\subsection{Data Storage and Retrieval Infrastructure}
+
+As embodied AI datasets grow in scale and modality diversity, storage and retrieval infrastructure becomes a bottleneck. \citet{lu_multimodal_2025} survey five storage architectures and five retrieval paradigms for embodied AI data, reviewing over 180 studies. Key challenges include the physical grounding gap (aligning stored representations with real-world dynamics), cross-modal integration (maintaining temporal synchronization across RGB, depth, force, and proprioceptive streams), and open-world generalization (retrieving relevant experience from large heterogeneous corpora for novel deployment scenarios). IA-VLA demonstrates that augmenting VLA inputs with large VLM pre-processing can address semantic complexity in retrieval, particularly for tasks with visually indistinguishable objects that require external knowledge \citep{hannus_ia-vla_2025}.
 
 \subsection{Current Gaps}
 
-Despite progress, metric mismatch remains common: image-level prediction quality may not imply physically correct interaction outcomes, and short-horizon gains may not transfer to multi-stage tasks \citep{gupta_essential_2024,valle_evaluating_2025,wang_unified_2025}. This gap motivates evaluation protocols that jointly report dynamics realism, decision quality, and deployment behavior.
+Despite progress, several metric and data gaps persist. First, metric mismatch remains common: image-level prediction quality may not imply physically correct interaction outcomes, and short-horizon gains may not transfer to multi-stage tasks \citep{gupta_essential_2024,valle_evaluating_2025,wang_unified_2025}. Second, adversarial robustness is largely untested: VLA-Fool demonstrates that multimodal adversarial attacks (textual, visual, and cross-modal misalignment) can severely degrade VLA outputs, while model-agnostic adversarial patches placed in camera view disrupt semantic alignment between visual and textual representations \citep{yan_when_2025,xu_model-agnostic_2025}. Third, data licensing, robot-operator privacy, and intervention traceability increasingly constrain which datasets can be reused for large-scale pretraining, creating governance challenges that technical solutions alone cannot address. Fourth, sample efficiency varies dramatically: while some approaches require hundreds of thousands of trajectories, \citet{hu_sample-efficient_2025} demonstrate that VLAs can achieve 60--100\% success on construction tasks with few-shot data when hierarchical task decomposition is properly designed.
+
+These gaps collectively motivate evaluation protocols that jointly report dynamics realism, decision quality, deployment behavior, and adversarial robustness---moving beyond the current single-benchmark paradigm toward comprehensive deployment readiness assessment.

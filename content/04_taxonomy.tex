@@ -11,13 +11,64 @@ This design also aligns with historical development: early rearrangement and ins
 
 \subsection{Axis A: Functionality Coupling}
 
-\textbf{Decision-coupled world models} are trained and evaluated for direct control impact (policy improvement, planning reliability, intervention reduction). Representative examples include online-refined VLA pipelines and world-model-guided policy optimization \citep{intelligence__06_2025,li_vla-rft_2025,zang_rlinf-vla_2025,zhu_wmpo_2025}.
+\textbf{Functionality coupling} specifies \emph{what the world model is for} inside the embodied decision stack: is it optimized as a reusable predictive prior, or is it optimized as a control-facing component whose value is measured by improved decisions? We separate recent systems into three regimes: \textbf{decision-coupled world models}, \textbf{general-purpose world models}, and \textbf{hybrid pretrain-then-couple} systems that explicitly switch objectives across phases.
 
-\textbf{General-purpose world models} prioritize broad predictive capability and transfer, then attach downstream controllers. This line includes large pretraining efforts and multimodal dynamics models used as reusable priors \citep{nvidia_cosmos_2025,team_gigabrain-0_2025,fan_wow_2026,yin_genie_2026}.
+\subsubsection{Decision-Coupled World Models (Closed-Loop Optimization)}
+\label{sec:taxonomy:axisA:decision-coupled}
 
-In practice, the key separator is \emph{optimization target}. Decision-coupled models directly optimize task-facing losses (success, intervention, or value improvement) under closed-loop rollout constraints. General-purpose models prioritize reusable predictive competence, often scaling with heterogeneous data and delaying control coupling to post-training.
+\textbf{Decision-coupled world models} are trained and evaluated for direct control impact: improved success rate under distribution shift, reduced interventions, safer recovery, or higher long-horizon utility. In this regime, the world model is not merely a predictor; it is an \emph{optimization interface} for planning, policy gradients, and post-training refinement \citep{cen_worldvla_2025,chen_bridgev2w_2026,wan_worldagen_2025,zhu_wmpo_2025,peng_reworld_2026}.
 
-The two settings are complementary rather than contradictory: many successful systems pretrain in a general-purpose regime and then switch to decision-coupled adaptation for target deployment \citep{intelligence__05_2025,intelligence__06_2025,black__0_2026,li_controlvla_2025,lu_vla-rl_2025}.
+\paragraph{Online-refined VLA pipelines.}
+A central 2025 trend is to treat VLA policies as strong priors and then close the deployment gap through decision-coupled refinement loops. $\pi^*_{0.6}$ (RECAP) emphasizes intervention- and correction-aware post-training that targets deployment reliability rather than only imitation fit \citep{intelligence__06_2025}. Related refinement styles include simulator- or reward-mediated fine-tuning for robustness and failure recovery \citep{li_vla-rft_2025,lu_vla-rl_2025,zang_rlinf-vla_2025,zhang_robustvla_2025,guo_improving_2025,li_simplevla-rl_2025,xu_stare-vla_2025}. ConRFT further emphasizes combining offline and online signals under a unified refinement objective, reflecting the broader shift from static imitation to deployment-aware learning \citep{chen_conrft_2025}. Complementary post-training strategies include action-chunked PPO with self behavior cloning for stable policy improvement \citep{wang_vla_2025}, adaptive offline RL that balances signal and variance for flow-based VLA models \citep{zhang_balancing_2025}, interactive post-training that leverages iterative human feedback during adaptation \citep{tan_interactive_2025}, fine-tuning protocols that jointly optimize speed and success rate under constrained compute \citep{kim_fine-tuning_2025}, and refined policy distillation that transfers VLA generalist priors into RL-specialized experts for targeted deployment \citep{julg_refined_2025}.
+
+Concretely, we observe several decision-coupling patterns in the 2024--2026 VLA refinement literature:
+\begin{itemize}
+    \item \textbf{Intervention/correction coupling:} RECAP explicitly models corrections and uses post-training loops to reduce deployment failures \citep{intelligence__06_2025}; related studies emphasize the gap between offline imitation and online recovery \citep{li_vla-rft_2025,lu_vla-rl_2025,chen_conrft_2025}.
+    \item \textbf{RL-from-policy-prior coupling:} RL-style updates are applied on top of pretrained VLA priors to improve robustness and reduce intervention needs under distribution shift \citep{zang_rlinf-vla_2025,li_simplevla-rl_2025,xu_stare-vla_2025,zhang_robustvla_2025,zhang_reinbot_2025}.
+    \item \textbf{Safety and reliability coupling:} safety-oriented variants treat risk and intervention as first-class training/evaluation signals rather than as afterthoughts, motivating explicit reliability objectives and calibration \citep{zhang_safevla_2025,liu_vla-mark_2025,pugacheva_bring_2025,wu_pragmatic_2026}.
+    \item \textbf{Critic/value coupling:} policy updates are shaped by critics or action-quality estimators that provide decision-relevant gradients beyond behavior cloning likelihood \citep{zhai_vision-language-action-critic_2025,park_acg_2025,haon_mechanistic_2025}.
+    \item \textbf{Action-interface coupling:} some works argue that improved action parameterizations (tokenization/chunking) are prerequisites for stable decision-coupled post-training \citep{pertsch_fast_2025,wang_vq-vla_2025,wen_dvla_2025}.
+\end{itemize}
+
+The breadth of decision-coupled systems in 2024--2026 is substantial. Among refinement-oriented approaches, $\pi^*_{0.6}$/RECAP couples post-training directly to intervention and correction signals, reporting more than doubled throughput and roughly halved failure rates on difficult real-world tasks \citep{intelligence__06_2025}. VLA-RFT surpasses strong supervised baselines with fewer than 400 fine-tuning steps using simulator-driven RL \citep{li_vla-rft_2025}, while VLA-RL demonstrates that on-policy RL from pretrained VLA priors improves robustness under distribution shift without catastrophic forgetting \citep{lu_vla-rl_2025}. RLINF-VLA achieves 98.11\% task success across 130 LIBERO tasks through hindsight relabeling and online RL on a 3B-parameter VLA prior \citep{zang_rlinf-vla_2025}, and STARE-VLA reaches 98.0\% on SimplerEnv via stabilized reward-based training \citep{xu_stare-vla_2025}. RobustVLA and SimpleVLA-RL provide complementary evidence that lightweight RL coupling suffices to close substantial deployment gaps \citep{zhang_robustvla_2025,li_simplevla-rl_2025}. ReinboT integrates dense return prediction into VLA training to capture data-quality nuances, achieving state-of-the-art performance on the CALVIN mixed-quality dataset with improved out-of-distribution generalization \citep{zhang_reinbot_2025}. ConRFT unifies offline and online refinement under a single consistency objective evaluated on eight real-world manipulation tasks \citep{chen_conrft_2025}.
+
+Among world-model-guided stacks, WorldVLA co-trains action generation and future prediction in a shared autoregressive backbone, demonstrating that predictive co-modeling improves manipulation success without separate planning modules \citep{cen_worldvla_2025}. BridgeV2W converts coordinate actions into pixel-aligned embodiment masks rendered from URDF and camera parameters, achieving state-of-the-art cross-view transfer on BridgeData manipulation \citep{chen_bridgev2w_2026}. FlowDreamer introduces flow-style intermediates to reduce pixel-action mismatch in contact-rich settings \citep{guo_flowdreamer_2026}, while WMPO explicitly optimizes policy through learned world-model rollouts, highlighting model-bias management as a core challenge \citep{zhu_wmpo_2025}. WorldAgen and ReWorld exemplify long-horizon planning via imagined rollouts and decision scoring \citep{wan_worldagen_2025,peng_reworld_2026}. Reward-conditioned and alignment-oriented models make coupling explicit by treating reward as an input/output channel for rollout ranking \citep{xiao_world-env_2025,ren_aligning_2026}. Critically, decision coupling must be paired with monitoring and trust signals: SafeVLA and VLA-Mark introduce safety markers and policy diagnostics to prevent reward hacking or unsafe deployment under aggregate metric optimization \citep{zhang_safevla_2025,liu_vla-mark_2025,valle_evaluating_2025,wu_pragmatic_2026}.
+
+\paragraph{World-model-guided decision stack patterns.}
+We categorize world-model-guided decision stacks by \emph{where} the world model enters the control loop. In \textbf{joint prediction-action stacks}, action generation and predictive rollout share a representation backbone, as in WorldVLA \citep{cen_worldvla_2025}. \textbf{Interface-alignment stacks} use explicit embodiment alignment---URDF/camera-conditioned masks or flow intermediates---to connect coordinate actions to pixel-space predictions, addressing the representation mismatch that otherwise limits cross-view transfer \citep{chen_bridgev2w_2026,guo_flowdreamer_2026}. \textbf{Planner-over-rollouts stacks} employ a planner (search, reasoning, or constraint filtering) that scores imagined trajectories and selects actions based on long-horizon structure; VLA-Reasoner, WorldAgen, and AdaPower exemplify this pattern with different planning interfaces \citep{guo_vla-reasoner_2025,chen_planning_2025,wan_worldagen_2025,peng_reworld_2026,huang_adapower_2025,liu_what_2026}. Finally, \textbf{benchmark-anchored rollout diagnosis} evaluates rollout quality at the concept level rather than the pixel level, making world-model failures auditable for downstream decision-making \citep{upadhyay_worldbench_2026,wu_what_2026}.
+
+\paragraph{Reward-conditioned and alignment-oriented world models.}
+Reward- or preference-conditioned predictive models make coupling explicit by treating reward as an input/output channel of the world model, supporting task-conditioned rollouts and plan ranking \citep{xiao_world-env_2025,ren_aligning_2026}. The main tradeoff is that reward alignment errors can dominate if the representation does not encode embodiment constraints; this motivates evaluation that disentangles perceptual quality from physically correct decision utility \citep{valle_evaluating_2025,wu_pragmatic_2026,upadhyay_worldbench_2026}.
+
+\paragraph{A gradient-alignment view of ``decision coupling.''}
+We can formalize decision coupling as a consistency condition between updates that optimize predictive fidelity and updates that optimize decision utility. Let $\theta$ parameterize a policy $\pi_\theta$ and let $\phi$ parameterize a world model $p_\phi$. Consider a decision objective $J(\pi_\theta)$ (e.g., expected success or value) and a world-model loss $\mathcal{L}_{\text{wm}}(\phi;\theta)$ that depends on the policy-induced data distribution. A minimal coupling requirement is that model-focused updates should not systematically oppose decision improvement:
+\begin{equation}
+\left\langle \nabla_{\theta} J(\pi_\theta),\; -\nabla_{\theta}\mathcal{L}_{\mathrm{wm}}(\phi;\theta) \right\rangle \ge 0.
+\label{eq:coupling-gradient-alignment}
+\end{equation}
+While few papers report this dot-product explicitly, the design patterns above (intervention-aware objectives, embodiment-aware interfaces, and planning-time constraints) can be interpreted as choices that increase alignment between predictive training signals and control utility \citep{intelligence__06_2025,chen_bridgev2w_2026,cen_worldvla_2025,zhu_wmpo_2025}.
+
+\subsubsection{General-Purpose World Models (Reusable Predictive Priors)}
+\label{sec:taxonomy:axisA:general-purpose}
+
+\textbf{General-purpose world models} prioritize broad predictive capability and transfer, and only later attach downstream controllers or use the model as a data engine. This family includes platform-level initiatives and scaling efforts that emphasize multimodal dynamics modeling, large heterogeneous datasets, and reusable priors \citep{nvidia_cosmos_2025,team_gigaworld-0_2025,team_gigabrain-0_2025,fan_wow_2026,yin_genie_2026}.
+
+Cosmos positions world models as infrastructure (data pipelines, tokenization, post-training) rather than as a single monolithic controller module \citep{nvidia_cosmos_2025}. GigaWorld-0 and GigaBrain-0 emphasize that predictive models can be used to generate or curate training data at scale, effectively shifting the bottleneck from robot collection to world-model quality and filtering \citep{team_gigaworld-0_2025,team_gigabrain-0_2025}. Mechanistic and semantic-consistency efforts motivate structure beyond pixels, arguing that perceptual realism does not guarantee physically correct causal transitions \citep{wang_mechanistic_2026,berg_semantic_2025,upadhyay_worldbench_2026}.
+
+Within this general-purpose regime, the dominant tradeoff is \textbf{breadth vs.\ controllability}. Broad models aim to cover many domains and tasks, but control-specific deployment often reveals that the learned dynamics are too weakly grounded in embodiment constraints (kinematics, contacts, latency) to directly support decision making without adaptation \citep{valle_evaluating_2025,wu_pragmatic_2026,wu_what_2026}. This motivates two complementary strategies: (i) augment general-purpose models with more structured latent interfaces that preserve action-relevant factors while remaining scalable \citep{bi_motus_2025,tharwat_latent_2025,tan_latent_2025,lillemark_flow_2026}, and (ii) use the general-purpose model as an upstream generator/curator of data, then learn a control-specialized policy in a decision-coupled stage \citep{team_gigaworld-0_2025,team_gigabrain-0_2025,black__0_2026,intelligence__06_2025}.
+
+Within the general-purpose regime, several recurring subtypes emerge. \textbf{Platform/infrastructure} approaches, exemplified by Cosmos, emphasize modular pipelines for world modeling and post-training rather than monolithic architectures \citep{nvidia_cosmos_2025}. \textbf{Data-engine world models} such as GigaWorld-0 and GigaBrain-0 position the world model as a scalable data generator and curator, shifting the training bottleneck from physical robot collection to model quality and output filtering \citep{team_gigaworld-0_2025,team_gigabrain-0_2025}. \textbf{Foundation video/world models} in the GENIE lineage emphasize broad transfer across domains and tasks through massive-scale training \citep{yehudai_genie_2024,liao_genie_2025,yin_genie_2026}, while WOW and related video forecasting systems push long-horizon coherence at scale \citep{fan_wow_2026,mei_video_2026,ye_dream-vl_2026}. \textbf{Flow- and latent-structured models} use structured latent representations and flow-style formulations to improve rollout efficiency and controllability \citep{bi_motus_2025,tharwat_latent_2025,tan_latent_2025,lillemark_flow_2026}. \textbf{Mechanistic and semantic consistency models} move beyond purely perceptual metrics to enforce concept-level physical constraints, arguing that pixel realism does not guarantee causally correct state transitions \citep{berg_semantic_2025,wang_mechanistic_2026,upadhyay_worldbench_2026}. While these models often report impressive prediction quality, the survey evidence indicates that control relevance must be engineered through interfaces (action conditioning, embodiment masks, geometry, or reward conditioning) or through explicit post-training \citep{cen_worldvla_2025,chen_bridgev2w_2026,li_vla-rft_2025}.
+
+\subsubsection{Hybrid Pretrain-Then-Couple (Objective Switching)}
+\label{sec:taxonomy:axisA:hybrid}
+
+Many successful systems are \textbf{hybrids}: they pretrain a broad prior (policy or world model), then explicitly switch to decision-coupled objectives for target deployment. The $\pi_0$ lineage is an archetype: $\pi_0$ and $\pi_{0.5}$ emphasize large-scale pretraining, while $\pi^*_{0.6}$ emphasizes post-training and correction loops that improve robustness in real-world settings \citep{black__0_2026,intelligence__05_2025,intelligence__06_2025}. Similar pretrain-then-couple patterns also appear in foundation VLA series and multi-stage pipelines that separate representation learning from later decision calibration \citep{kim_openvla_2024,cen_rynnvla-002_2025,cai_internvla-a1_2026,li_controlvla_2025}. UP-VLA exemplifies this pattern by unifying understanding and prediction in a single model that first learns broad visual-language priors and then couples them with embodied action prediction for downstream manipulation \citep{zhang_up-vla_2025}.
+
+Operationally, hybrids specify \emph{when} coupling occurs and \emph{what signal} drives the switch. A common pattern is: (i) pretrain a foundation policy or predictive model on heterogeneous offline data, (ii) align the action interface and task conditioning for a target embodiment (often via supervised adaptation), and (iii) perform decision-coupled post-training using RL, interventions, or planning-time constraints \citep{intelligence__05_2025,black__0_2026,li_controlvla_2025,lu_vla-rl_2025,li_vla-rft_2025}. This framing helps explain why many 2025 papers report large gains from relatively small amounts of closed-loop data: the pretraining phase provides broad competence, and the coupling phase calibrates failure recovery and domain shift \citep{intelligence__06_2025,li_vla-rft_2025,zang_rlinf-vla_2025}.
+
+We emphasize that this hybrid switch is not merely a training schedule detail; it changes the \emph{failure surface}. Pretraining-dominant models often fail via systematic long-horizon drift and brittle recovery, while decision-coupled post-training tends to reduce catastrophic failures at the cost of additional infrastructure (safe rollout collection, intervention design, reward specification) \citep{valle_evaluating_2025,wu_pragmatic_2026,wu_what_2026}.
+
+Representative pretrain-then-couple systems span the full spectrum from industry-scale pipelines to academic adaptation studies. The $\pi_{0.5}$ and $\pi_0$ models serve as large-scale foundation priors trained on heterogeneous dexterous robot data with flow-matching action heads; $\pi^*_{0.6}$ (RECAP) then applies an explicit post-training phase using demonstrations, on-policy rollouts, and teleoperator corrections that substantially improve deployment reliability \citep{intelligence__05_2025,black__0_2026,intelligence__06_2025}. Open-data foundation policies, including OpenVLA and Octo, couple broad pretraining on Open-X and BridgeData with downstream adaptation on target embodiments, demonstrating that even 7B-parameter open-source models can match or exceed larger closed models on standard manipulation benchmarks \citep{kim_openvla_2024,collaboration_open_2025,team_octo_2024}. Foundation VLA series such as RYNNVLA-002 and InternVLA-A1 separate representation learning from decision calibration through multi-stage training recipes \citep{cen_rynnvla-002_2025,cai_internvla-a1_2026,liu_eva-vla_2025}. Control-calibration variants like ControlVLA explicitly target action-interface alignment and closed-loop refinement as the final coupling stage \citep{li_controlvla_2025,lu_vla-rl_2025,li_vla-rft_2025}.
 
 \subsection{Representative Method Evidence}
 
@@ -27,27 +78,101 @@ Representative system reports indicate that recent gains are tied to explicit de
     \item \textbf{Tokenization as a systems lever:} FAST explicitly attributes failures of naive per-dimension binning in high-frequency dexterous control and proposes DCT-based tokenization, reporting up to $5\times$ training speedups \citep{pertsch_fast_2025}.
     \item \textbf{Action-world co-modeling:} WorldVLA frames action generation and future image prediction as mutually beneficial in one autoregressive stack, while VLA-RFT and VLA-RL highlight RL-style fine-tuning for robustness under distribution shift \citep{cen_worldvla_2025,li_vla-rft_2025,lu_vla-rl_2025}.
     \item \textbf{Embodiment-conditioned world modeling:} BridgeV2W converts coordinate actions into pixel-aligned embodiment masks (from URDF and camera parameters) to align action control with video prediction and cross-view consistency \citep{chen_bridgev2w_2026}.
+    \item \textbf{Reasoning traces as control scaffolds:} reasoning-augmented VLAs generate explicit intermediate plans or CoT-style traces, aiming to improve multi-step execution and recovery under ambiguous instructions \citep{ye_vla-r1_2025,zhao_cot-vla_2025,huang_graphcot-vla_2025,yin_deepthinkvla_2025}.
+    \item \textbf{Efficiency as an interface problem:} speculative decoding, caching, and pruning approaches reduce latency and memory, making deployment feasible on constrained platforms \citep{wang_spec-vla_2025,wang_specprune-vla_2025,xu_vla-cache_2025,fang_sqap-vla_2025,zhang_mole-vla_2025}.
+    \item \textbf{Multi-modal contact grounding:} tactile/force/audio augmentation makes contact and compliance observable, addressing failure modes that are invisible to RGB-only policies \citep{bi_vla-touch_2025,huang_tactile-vla_2025,yu_forcevla_2025,wei_audio-vla_2025}.
+    \item \textbf{3D geometry for viewpoint and contact stability:} depth/point/3D-aware VLAs emphasize geometry as a robustness prior for manipulation and navigation under viewpoint shift \citep{qu_spatialvla_2025,sun_geovla_2025,zhang_4d-vla_2025,zhen_3d-vla_2024,bhat_3d_2025}.
 \end{itemize}
 
 These results are consistent with the functionality axis: models that explicitly connect representation learning to downstream control objectives tend to report better real-world robustness than purely decoupled predictive modeling. Similar behavior was already visible in earlier grounding-focused methods that constrained language plans with executable skills or grounded objectives \citep{ahn_as_2022,huang_grounded_2023,dasgupta_collaborating_2023}.
 
 \subsection{Axis B: Temporal Modeling}
 
-\textbf{Sequential rollouts} simulate future states step by step and align naturally with MPC-style control, but face compounding error over long horizons \citep{li_comprehensive_2025,fung_embodied_2025,cen_worldvla_2025}.
+\textbf{Temporal modeling} describes \emph{how} the model commits to time: predicting step-by-step rollouts, forecasting long segments, or mixing both with corrective feedback. This axis is central because embodied tasks are long-horizon but must act at high frequency, which makes compounding error, latency, and correction bandwidth first-order deployment constraints \citep{gupta_essential_2024,cen_worldvla_2025,wu_pragmatic_2026}.
 
-\textbf{Global prediction} methods forecast larger trajectory segments or future differences in parallel and can improve efficiency, but require stronger structural priors to preserve causal consistency \citep{wan_worldagen_2025,mei_video_2026,wang_mechanistic_2026}.
+\subsubsection{Sequential Rollout (Step-by-Step Simulation)}
+\label{sec:taxonomy:axisB:sequential}
 
-This temporal choice can be viewed as a bias-variance-compute tradeoff. Let $\epsilon_t$ denote one-step model error in latent space. In a simplified sequential regime, rollout error can scale approximately as
+\textbf{Sequential rollouts} simulate future states step by step and align naturally with MPC-style control, but face compounding error over long horizons \citep{li_comprehensive_2025,fung_embodied_2025,cen_worldvla_2025,shah_learning_2026}. They are attractive when the agent must react to contact events and micro-corrections (e.g., grasp slippage) and when planning requires action-conditioned branching \citep{qian_wristworld_2025,cen_worldvla_2025}.
+
+Let $\epsilon_t$ denote one-step model error in a representation space. In a simplified sequential regime, rollout error can scale approximately as
 \begin{equation}
 \mathcal{E}_{t+H} \propto \sum_{k=0}^{H-1}\|\epsilon_{t+k}\|,
 \end{equation}
-which explains sensitivity in long-horizon manipulation and multi-agent traffic forecasting. Global predictors reduce iterative accumulation steps but can underfit local control-relevant transitions unless they include action- and embodiment-aware constraints \citep{chen_bridgev2w_2026,guo_flowdreamer_2026,zhou_digital_2026}.
+which explains why long-horizon multi-stage tasks are sensitive to model drift even when one-step metrics are strong \citep{gupta_essential_2024,upadhyay_worldbench_2026,wang_mechanistic_2026}.
 
-Recent hybrids combine chunk-wise global prediction with local sequential correction, effectively using coarse global proposals and fine-grained control-time refinement \citep{team_gigaworld-0_2025,shen_efficient_2026,wu_visual_2026}.
+Sequential rollouts are most effective when paired with explicit \textbf{replanning and correction} loops: the world model is rolled out for a short horizon, an action chunk is selected, the system executes a few steps, and the model is reconditioned on new observations. This fits naturally with VLA chunking interfaces and with intervention-aware refinement, where the goal is not to perfectly predict far-future pixels, but to maintain decision-relevant accuracy over the next few correction windows \citep{cen_worldvla_2025,chen_bridgev2w_2026,intelligence__06_2025,wu_pragmatic_2026}.
+
+Representative sequential-rollout systems span several design families. WorldVLA couples action generation with step-wise prediction within a single autoregressive backbone, keeping the rollout state control-relevant and avoiding the need for separate planning modules \citep{cen_worldvla_2025}. WristWorld adopts an egocentric, wrist-centric conditioning strategy that stabilizes manipulation rollouts under occlusion and viewpoint motion inherent to first-person operation \citep{qian_wristworld_2025}. Control-focused world models such as WMPO and the learning-to-control framework of \citet{shah_learning_2026} emphasize sequential prediction as a scaffold for long-horizon MPC-like optimization, where the world model provides gradients directly to the policy. Counterfactual evaluation designs exploit sequential rollouts to score alternative action sequences, enabling counterfactual learning objectives that improve robustness to spurious correlations \citep{peng_counterfactual_2025}. Perception-conditioned action models pair sequential prediction with strong perception modules---Percept-WAM uses perceptual grounding to reduce rollout drift under contact and occlusion \citep{han_percept-wam_2025}.
+
+\subsubsection{Global/Segment Prediction (Parallel Long-Horizon Forecasting)}
+\label{sec:taxonomy:axisB:global}
+
+\textbf{Global prediction} methods forecast trajectory segments or long-horizon futures in parallel. This can improve training efficiency and reduce autoregressive accumulation steps, but typically requires stronger inductive biases (action conditioning, embodiment constraints, semantic consistency) to preserve causal coherence across the horizon \citep{wan_worldagen_2025,mei_video_2026,wang_mechanistic_2026,xie_latentvla_2026}.
+
+One useful way to interpret global predictors is as learning a segment function $F_\phi$ that outputs a chunk $\hat{\mathbf{s}}_{t:t+H}$ directly. The key issue becomes \emph{temporal consistency}: overlapping segments predicted from adjacent contexts should agree on their shared portion. Let $\hat{\mathbf{s}}^{(t)}_{t:t+H}$ denote a segment predicted from context up to $t$, and $\hat{\mathbf{s}}^{(t+\Delta)}_{t+\Delta:t+\Delta+H}$ denote a later segment. A minimal consistency requirement is
+\begin{equation}
+\left\|\hat{\mathbf{s}}^{(t)}_{t+\Delta:t+H} - \hat{\mathbf{s}}^{(t+\Delta)}_{t+\Delta:t+H}\right\|
+\le
+\kappa \cdot \left\|\mathbf{o}_{\le t+\Delta}-\mathbf{o}_{\le t}\right\|,
+\label{eq:global-temporal-consistency}
+\end{equation}
+for some $\kappa$ that captures the model's sensitivity to new evidence. Eq.~\eqref{eq:global-temporal-consistency} motivates designs that reduce sensitivity through action- and embodiment-aware constraints (so that segment updates reflect physical evidence rather than purely perceptual drift) \citep{chen_bridgev2w_2026,guo_flowdreamer_2026,wang_mechanistic_2026}.
+
+Global prediction becomes compelling when \textbf{parallelism} is a primary constraint: predicting long segments in one forward pass can reduce iterative decoding cost and can simplify training on long videos. However, the deployment risk is that segment predictors may produce futures that are visually coherent but physically inconsistent with actions (e.g., violating contact constraints). Recent work argues that this is best addressed by adding action- and embodiment-aware constraints or by attaching decision-coupled post-training objectives that expose physical inconsistencies through closed-loop rollouts \citep{wan_worldagen_2025,wang_mechanistic_2026,chen_bridgev2w_2026,wu_what_2026}.
+
+Representative global/segment predictors include long-horizon agentic generation and general video forecast models \citep{wan_worldagen_2025,mei_video_2026,fan_wow_2026}, as well as latent-structured predictors that aim to preserve controllable factors while reducing bandwidth \citep{tan_latent_2025,xie_latentvla_2026}.
+
+Additional representative global-prediction works (used either directly for forecasting or as priors for downstream coupling) include flow- and video-forecasting variants \citep{lillemark_flow_2026,ye_dream-vl_2026,yang_vlaser_2026} and benchmark/diagnostic efforts that emphasize evaluating global coherence under controlled shifts \citep{xiang_parallels_2026,wu_what_2026,upadhyay_worldbench_2026}.
+
+\subsubsection{Hybrid Chunk-and-Correct (Coarse Prediction + Local Refinement)}
+\label{sec:taxonomy:axisB:hybrid}
+
+Recent hybrids combine chunk-wise global prediction with local sequential correction: a coarse global proposal provides long-horizon structure, while a local controller performs high-frequency corrective updates \citep{team_gigaworld-0_2025,shen_efficient_2026,sendai_leave_2025,lin_hif-vla_2025}. This design is especially natural for VLA policies that already operate with action chunking and periodic replanning: chunk-level outputs amortize expensive VLM inference, while correction mechanisms restore closed-loop reactivity \citep{black__0_2026,chen_conrft_2025,wen_dvla_2025}.
+
+Hybrid designs can be interpreted as implementing a \textbf{coarse-to-fine temporal contract}: the global model proposes a trajectory distribution over a longer horizon, and a local model or controller corrects deviations using fresh observations. This structure matches the practical constraints of robot control, where (i) the agent must act within a strict latency budget and (ii) long-horizon plans must be revisable when contact dynamics or other agents change the state unpredictably \citep{wu_pragmatic_2026,wu_what_2026}.
+
+Representative hybrid temporal designs include compute-aware hybridization \citep{shen_efficient_2026}, as well as correction-style training objectives (leave-one-out or chunk-and-correct losses) that directly optimize consistency under partial rollouts \citep{sendai_leave_2025,lin_hif-vla_2025}.
 
 \subsection{Axis C: Spatial Representation}
 
-\textbf{Compact latent representations} support real-time control and low compute budgets. \textbf{Tokenized representations} improve multimodal alignment with language-conditioned reasoning. \textbf{Geometry-aware or rendering-aware representations} better preserve view consistency and object-level structure for manipulation and driving scenarios \citep{chen_bridgev2w_2026,li_spatial_2025,sun_geovla_2025,zhang_4d-vla_2025}.
+\textbf{Spatial representation} specifies the state interface between perception, prediction, and action. We separate four common choices: \textbf{compact latents}, \textbf{tokenized representations}, \textbf{geometry-aware (3D) representations}, and \textbf{rendering-aware representations}. This axis matters because embodiment breaks many purely-visual invariances: camera motion, occlusion, contact geometry, and kinematic constraints all create failure modes when representation choices hide the relevant structure \citep{gupta_essential_2024,chen_bridgev2w_2026,upadhyay_worldbench_2026}.
+
+\subsubsection{Compact Latent Representations}
+\label{sec:taxonomy:axisC:compact-latent}
+
+\textbf{Compact latent representations} compress observations into low-dimensional continuous states that support real-time rollout and control. They are attractive when compute budgets are tight and when the primary goal is closed-loop control rather than high-fidelity rendering \citep{lee_behavior_2024,tharwat_latent_2025,tan_latent_2025}. In VLA settings, compact latents are often combined with token-based language context to keep the control state small while retaining instruction conditioning \citep{chen_villa-x_2025,li_cogvla_2025}.
+
+The main limitation is that compact latents can hide geometry- and contact-critical information unless explicitly structured or trained with control-facing objectives. This is one reason compact-latent designs frequently appear in decision-coupled systems (where closed-loop losses reveal what information the latent must preserve) or are combined with explicit 3D modules when viewpoint and occlusion dominate \citep{cen_worldvla_2025,chen_bridgev2w_2026,qu_spatialvla_2025}.
+
+Representative compact-latent works include behavior- and control-oriented latent designs that compress state for efficient policy learning \citep{lee_behavior_2024}, latent-structured world models such as Motus that target efficient rollout by compressing dynamics factors into low-bandwidth representations \citep{tharwat_latent_2025,tan_latent_2025,bi_motus_2025}, and latent interfaces embedded within broader VLA stacks where language context supplies semantic structure while the latent supplies fast control state \citep{chen_villa-x_2025,li_cogvla_2025}.
+
+\subsubsection{Tokenized Representations}
+\label{sec:taxonomy:axisC:tokenized}
+
+\textbf{Tokenized representations} discretize visual or action spaces into sequences compatible with transformer decoding. This makes it easy to unify vision, language, and action under one autoregressive interface, and it enables shared attention over multimodal tokens \citep{pertsch_fast_2025,wang_vq-vla_2025,liang_discrete_2025,zhang_vtla_2025}. A recurring design question is \emph{what to tokenize}: raw pixels (high bandwidth), learned VQ codes (lower bandwidth), frequency-domain tokens (control efficient), or structured object tokens (more semantic) \citep{pertsch_fast_2025,wang_vq-vla_2025,liang_discrete_2025,bendikas_focusing_2025}. TTF-VLA introduces temporal token fusion via pixel-attention integration that enriches action tokens with temporally grounded visual context, improving manipulation accuracy under dynamic scenes \citep{liu_ttf-vla_2025}.
+
+Tokenization is a \textbf{systems lever} because it influences both training efficiency and control fidelity. FAST argues that naive discretization can fail in high-frequency dexterous control and proposes frequency-domain tokenization to improve efficiency \citep{pertsch_fast_2025}. VQ-based action/state designs aim to compress action bandwidth while keeping a transformer-friendly interface \citep{wang_vq-vla_2025,liang_discrete_2025}. Focusing/object-centric tokenization emphasizes allocating capacity to task-relevant objects and interactions \citep{bendikas_focusing_2025,patratskiy_spatial_2025}. At inference time, caching/speculative mechanisms can exploit token structure to reduce latency \citep{xu_vla-cache_2025,wang_spec-vla_2025,wang_specprune-vla_2025}.
+
+Representative tokenized-interface designs include FAST's frequency-domain action tokenization, which uses DCT-based encoding to preserve dexterous high-frequency action structure while achieving up to $5\times$ training-time reduction \citep{pertsch_fast_2025}; VQ-style action/state tokenization that compresses continuous control into transformer-friendly discrete codes \citep{wang_vq-vla_2025,liang_discrete_2025}; tokenized spatial attention mechanisms that focus transformer capacity on task-relevant objects and contact regions \citep{bendikas_focusing_2025,patratskiy_spatial_2025}; discrete-token policy interfaces that standardize multi-embodiment control pipelines through shared vocabulary \citep{wang_vla-adapter_2025}; and token-level runtime acceleration through caching and speculative decoding that exploit the sequential structure of tokenized actions to reduce inference latency to real-time budgets \citep{xu_vla-cache_2025,wang_spec-vla_2025,wang_specprune-vla_2025}.
+
+\subsubsection{Geometry-Aware / 3D Representations}
+\label{sec:taxonomy:axisC:geometry}
+
+\textbf{Geometry-aware representations} incorporate depth, point clouds, multi-view fusion, or explicit 3D structure to stabilize viewpoint changes and preserve contact-relevant constraints. This is especially important for manipulation and navigation where pixel similarity is a weak proxy for physical feasibility \citep{qu_spatialvla_2025,sun_geovla_2025,zhang_4d-vla_2025,li_3ds-vla_2025,zhen_3d-vla_2024}. Recent designs span depth-augmented policies and action heads \citep{yuan_depthvla_2025,li_qdepth-vla_2025}, point- and object-centric state interfaces \citep{li_pointvla_2026,singh_og-vla_2025}, and more explicit spatial reasoning stacks that bind language plans to 3D constraints \citep{feng_spatial-aware_2025,koo_retovla_2025,argus_cvla_2025,patratskiy_spatial_2025}.
+
+The key tradeoff is \textbf{accuracy vs.\ complexity}. Geometry-aware pipelines often require calibrated sensors, multi-view fusion, and more complex preprocessing, but they can dramatically reduce viewpoint-induced brittleness and improve contact consistency. This is particularly visible in depth-centric action heads and 3D-aware VLA formulations \citep{bhat_3d_2025,zhen_3d-vla_2024,yuan_depthvla_2025,li_qdepth-vla_2025}. In driving and navigation, geometry is also a stability prior for multi-agent interaction and long-horizon safety, motivating hybrid representations that combine semantic tokens with explicit spatial maps or 3D structure \citep{guo_vdrive_2025,hao_driveaction_2025}.
+
+Representative geometry-aware systems include explicit spatial reasoning VLAs that bind language-conditioned plans to 3D structure---SpatialVLA uses learned spatial priors that improve cross-view generalization by 15--30\% compared to RGB-only baselines \citep{qu_spatialvla_2025,feng_spatial-aware_2025,koo_retovla_2025,argus_cvla_2025,patratskiy_spatial_2025}; depth-centric VLA designs such as GeoVLA and DepthVLA that augment policy inputs or action heads with calibrated depth for contact stability \citep{sun_geovla_2025,yuan_depthvla_2025,li_qdepth-vla_2025}; 3D and 4D VLA formulations that enforce temporal-spatial consistency for long-horizon manipulation and navigation, with 3D-VLA and 4D-VLA incorporating point cloud and 4D scene representations respectively \citep{zhang_4d-vla_2025,li_3ds-vla_2025,zhen_3d-vla_2024,bhat_3d_2025}; point- and object-centric interfaces such as PointVLA and OG-VLA that treat objects and points as primary state variables for compositional reasoning \citep{li_pointvla_2026,singh_og-vla_2025}; and spatially grounded policy learning studies that motivate geometry as a robustness prior across viewpoint and scene variations \citep{li_spatial_2025}.
+
+\subsubsection{Rendering-Aware Representations}
+\label{sec:taxonomy:axisC:rendering}
+
+\textbf{Rendering-aware representations} introduce intermediate spatial fields or warping variables (e.g., optical flow) that better preserve pixel-space consistency under motion and viewpoint change. FlowDreamer uses flow-style intermediates to reduce pixel/action mismatch, while WristWorld highlights egocentric/wrist-centric modeling as a practical representation strategy for manipulation \citep{guo_flowdreamer_2026,qian_wristworld_2025}. Simulation suites such as PhyScene motivate rendering-aware evaluation by controlling lighting, camera, and interaction conditions to probe physical generalization \citep{yang_physcene_2024}.
+
+Rendering-aware state interfaces are often used as \textbf{bridges} between pixel prediction and coordinate action control: optical flow, warping fields, and egocentric views make it easier to connect action-conditioned motion to visual change. This is complementary to geometry-aware design: geometry emphasizes physical structure, while rendering-aware design emphasizes view consistency and motion cues that improve prediction stability under camera motion \citep{chen_bridgev2w_2026,guo_flowdreamer_2026}.
+
+Representative rendering-aware systems include flow/warping intermediates \citep{guo_flowdreamer_2026}, egocentric/wrist-centric interfaces \citep{qian_wristworld_2025}, embodiment-mask rendering for pixel/action alignment \citep{chen_bridgev2w_2026}, and simulation suites that stress-test rendering variation and physical interaction \citep{yang_physcene_2024,tai_realmirror_2025}.
 
 From a deployment perspective:
 \begin{itemize}
@@ -78,3 +203,188 @@ To make this mapping operational, we define three interface contracts:
 \end{itemize}
 
 These contracts clarify why many failures are \emph{interface failures}, not merely backbone failures. Two systems with similar backbone scale can show different field behavior because they differ in interface consistency across planning, control, and adaptation loops \citep{li_vla-rft_2025,wang_unified_2025,wu_what_2026}.
+
+\subsection{VLA Architecture Sub-Taxonomy}
+\label{sec:taxonomy:vla-architecture}
+
+Beyond the three world-model axes, we add a \textbf{VLA architecture sub-taxonomy} that captures how embodied policies instantiate perception-to-action mappings in practice. This sub-taxonomy is not a replacement for the three axes; rather, it provides an \emph{implementation lens} that explains why two papers placed in the same coupling/temporal/spatial class can still behave differently in deployment.
+
+\subsubsection{Foundation VLAs}
+\label{sec:taxonomy:vla-arch:foundation}
+
+\textbf{Foundation VLAs} aim to cover broad instruction distributions and diverse embodiments with one model family. Open-data pipelines such as OpenVLA and Octo emphasize scalable data aggregation and consistent interfaces for pretraining, with OpenVLA demonstrating state-of-the-art open-source manipulation across 29 tasks using a 7B-parameter model \citep{kim_openvla_2024,collaboration_open_2025,team_octo_2024,oneill_open_2024}. The $\pi_0$ lineage represents a foundation-policy direction that emphasizes large-scale heterogeneous pretraining with flow-matching action heads and then post-training for deployment robustness; $\pi_{0.5}$ extends this with semantic subtask signals for open-world generalization across multiple dexterous robots \citep{black__0_2026,intelligence__05_2025,intelligence__06_2025}. GR00T N1 introduces an explicit System 1/System 2 architecture, separating fast diffusion-based motor control from slow language-level reasoning to meet real-time constraints while preserving high-level task understanding \citep{nvidia_gr00t_2025,cheang_gr-2_2024}. Additional foundation-style VLA series include VLA-0, which provides a standardized training and evaluation framework \citep{goyal_vla-0_2025}, and the NORA series, which emphasizes modular and scalable foundation training \citep{hung_nora_2025,hung_nora-15_2025}. Broader consolidation efforts and training-recipe studies further codify the foundation VLA pattern \citep{li_towards_2024,li_towards_2025,li_vision-language_2024}. InternVLA-M1 introduces a spatially guided framework that leverages explicit spatial reasoning within a generalist robot policy, demonstrating improved cross-scene manipulation through structured spatial conditioning \citep{chen_internvla-m1_2025}. Domain-specialized foundation models extend the paradigm to specific manipulation competences while retaining broad conditioning, including MoManipVLA for mobile manipulation and GraspVLA for grasping \citep{wu_momanipvla_2025,deng_graspvla_2025,neau_grasp-vla_2025,du_himoe-vla_2025}. Early-2024 system studies and definition works established robust embodied training and evaluation protocols that informed subsequent developments \citep{ahmaditeshnizi_optimus_2024,huang_embodied_2024,kazemi_learning_2024,li_embodied_2024,lin_out_2024,salzer_bringing_2024,zeng_learning_2024,yang_embodied_2024}. Continual improvement directions include EvoVLA and evolve-style frameworks that emphasize iterative capability expansion rather than one-shot training \citep{liu_evovla_2025,bai_evolve-vla_2025,lin_evo-0_2025,lin_evo-1_2025}, and pi-style policy variants beyond the main $\pi_0$ line \citep{jian_pi-vla_2026,xiang_vla_2025}. Platform-level and system reports further define data and training recipes for embodied foundations \citep{leonardis_embodied_2025,li_embodied_2025}.
+
+\subsubsection{Action Head Variants}
+\label{sec:taxonomy:vla-arch:action-head}
+
+The \textbf{action head} determines how actions are represented and generated, and is often decisive for dexterity and latency. Recent variants include:
+\begin{itemize}
+    \item \textbf{Autoregressive heads} (token-by-token actions), which integrate naturally with unified multimodal token streams but can be slow at high control frequency \citep{pertsch_fast_2025,wang_vq-vla_2025,liang_discrete_2025}.
+    \item \textbf{Diffusion/flow heads}, which generate action chunks with smoother trajectories and can improve robustness for contact-rich behaviors \citep{wen_diffusionvla_2025,wen_dexvla_2025,wen_dvla_2025,wen_llada-vla_2025,tarasov_nina_2025,zhong_flowvla_2025}.
+    \item \textbf{Hybrid discrete-continuous heads}, which combine token interfaces with continuous residuals to balance controllability and expressiveness \citep{liu_hybridvla_2025,liu_hybridvla_2025-1,chen_unified_2025,wang_vla-adapter_2025}.
+    \item \textbf{Dual-system heads}, which separate slow reasoning/planning from fast motor execution to meet real-time constraints \citep{won_dual-stream_2025,fang_dualvla_2025,song_rationalvla_2025}.
+\end{itemize}
+
+The choice of action head is often decisive for both dexterity and inference latency. Diffusion-based action generation is explored both as a modeling choice for smoother chunk generation and as a robustness lever under contact uncertainty: DexVLA applies diffusion heads specifically for dexterous bimanual manipulation, reporting improved grasp stability on contact-rich tasks \citep{chi_diffusion_2024,wen_diffusionvla_2025,wen_dexvla_2025}. Flow-style action heads based on continuous-time or flow-matching formulations reduce sampling steps at inference while maintaining trajectory smoothness \citep{zhong_flowvla_2025,tarasov_nina_2025}. Hybrid heads and action-critic variants combine discrete token control with continuous residuals or quality estimators for precision---ACG uses action-conditioned critics to reshape policy updates \citep{liu_hybridvla_2025,park_acg_2025,zhai_vision-language-action-critic_2025}. Expression- and reconstruction-focused variants further demonstrate that action-head design interacts with representation learning and training stability in ways that pure backbone scaling cannot address \citep{syed_expres-vla_2025,song_reconvla_2025}.
+
+\subsubsection{Multi-Modal Sensing VLAs}
+\label{sec:taxonomy:vla-arch:multimodal}
+
+\textbf{Multi-modal sensing VLAs} extend beyond RGB to capture contact-relevant signals. Tactile and force augmentation improves manipulation reliability by making slip/contact observable \citep{bi_vla-touch_2025,huang_tactile-vla_2025,zhang_vtla_2025,yu_forcevla_2025,zhang_ta-vla_2025,zhang_compliantvla-adaptor_2026}. Audio augmentation is a complementary channel for contact events and tool interactions \citep{wei_audio-vla_2025}. Multi-sensor policy reports emphasize that the main challenge is not only fusion architecture, but also data synchronization and interface contracts between sensors and action heads \citep{guo_omnivla_2025,hong_multiply_2024,hirose_omnivla_2025}. MLA further extends multi-modal integration by combining visual, tactile, and proprioceptive streams in a unified language-action model for multimodal understanding and forecasting in robotic manipulation \citep{liu_mla_2025}.
+
+Tactile-augmented VLAs treat touch as a primary signal for slip and contact state estimation: VLA-Touch integrates GelSight-style tactile readings alongside RGB to improve grasp reliability under occlusion \citep{bi_vla-touch_2025,huang_tactile-vla_2025,zhang_vtla_2025}. Force and compliance augmentation enables safer grasping under uncertain dynamics, with ForceVLA reporting reduced object damage rates through explicit force-feedback conditioning \citep{yu_forcevla_2025,zhang_ta-vla_2025,zhang_compliantvla-adaptor_2026}. Audio augmentation provides a complementary channel for contact events and tool interactions, particularly useful for tasks where visual feedback alone cannot disambiguate success (e.g., insertion clicks, material friction) \citep{wei_audio-vla_2025}. Multi-sensor integration systems such as OmniVLA emphasize that the main challenge is not only fusion architecture but also data synchronization and interface contracts between heterogeneous sensors and action heads, with OmniVLA achieving 84\% task success on diverse multi-sensor benchmarks \citep{guo_omnivla_2025,hirose_omnivla_2025,hong_multiply_2024}.
+
+\subsubsection{Reasoning-Augmented VLAs}
+\label{sec:taxonomy:vla-arch:reasoning}
+
+\textbf{Reasoning-augmented VLAs} explicitly generate intermediate reasoning traces (e.g., CoT-style plans) before or alongside actions. These approaches aim to improve multi-step task decomposition, robustness to ambiguous instructions, and error recovery through explicit intermediate representations \citep{ye_vla-r1_2025,zhao_cot-vla_2025,zhang_reasoning-vla_2025,huang_graphcot-vla_2025,yin_deepthinkvla_2025,gu_manualvla_2025,li_coa-vla_2025,zhong_acot-vla_2026}. System-level reasoning layers (e.g., OS-style abstractions, reflection, or knowledge augmentation) can be interpreted as adding a slow planner that queries tools, memory, or world-model rollouts \citep{gao_vla-os_2025,li_reflection-based_2026,driess_knowledge_2025,liu_what_2026}.
+
+The CoT-style VLA series exposes explicit intermediate plans before action generation: VLA-R1 adapts reinforcement learning on reasoning traces to improve multi-step execution, while CoT-VLA generates symbolic subgoal sequences that are then grounded in action space \citep{ye_vla-r1_2025,zhao_cot-vla_2025,zhang_reasoning-vla_2025}. Graph-structured and deep-thinking variants such as GraphCoT-VLA and DeepThinkVLA extend this with structured reasoning traces that capture spatial relationships and task hierarchies for long-horizon planning \citep{huang_graphcot-vla_2025,yin_deepthinkvla_2025}. ManualVLA and VLA-OS provide controlled reasoning interfaces that emphasize reliable tool and memory use through explicit OS-style abstractions \citep{gu_manualvla_2025,gao_vla-os_2025}. Reflection and knowledge augmentation serve as slow-loop planning layers over fast action execution, with ChatVLA demonstrating that conversational feedback loops improve task completion through iterative self-correction \citep{li_reflection-based_2026,driess_knowledge_2025,liu_what_2026,zhou_chatvla_2025,zhou_chatvla-2_2025}. Action-oriented reasoning augmentation, including CoA-VLA and ACoT-VLA, ties plans explicitly to action affordances and control constraints rather than treating reasoning as a purely semantic process \citep{li_coa-vla_2025,zhong_acot-vla_2026}. VOTE optimizes VLA inference through trajectory ensemble voting, aggregating multiple candidate action sequences to improve robustness without additional training \citep{lin_vote_2025}.
+
+\subsubsection{Efficiency-Oriented VLAs}
+\label{sec:taxonomy:vla-arch:efficiency}
+
+\textbf{Efficiency-oriented VLAs} target latency, memory, and training cost constraints. Recent methods include pruning/compression and structural sparsity \citep{fang_sqap-vla_2025,jabbour_dont_2025,zhang_mole-vla_2025,xiong_hypervla_2025}, small/edge deployment models \citep{wen_tinyvla_2025,shukor_smolvla_2025,budzianowski_edgevla_2025,wang_vla-adapter_2025}, and speculative/caching mechanisms that reduce inference overhead \citep{wang_spec-vla_2025,wang_specprune-vla_2025,xu_vla-cache_2025,yu_ac2-vla_2026}. FAST is a representative systems lever on the action interface side, showing that tokenization choice can be as impactful as backbone scale for training throughput \citep{pertsch_fast_2025}. PD-VLA accelerates VLA inference by integrating action chunking with parallel decoding, reducing latency without sacrificing action quality \citep{song_pd-vla_2025}. MergeVLA introduces cross-skill model merging that combines independently trained skill-specific VLAs into a unified generalist agent without retraining, enabling compositional skill transfer \citep{fu_mergevla_2025}.
+
+Efficiency-oriented methods span several complementary strategies. Structured pruning and compression reduce memory and latency without full retraining: SQAP-VLA applies structured quantization-aware pruning that preserves 95\% of manipulation accuracy at 2$\times$ compression \citep{fang_sqap-vla_2025,jabbour_dont_2025,zhang_mole-vla_2025,xiong_hypervla_2025}. Edge and small-policy designs target resource-constrained platforms, with TinyVLA demonstrating effective manipulation from models under 1B parameters and SmolVLA providing an efficient open-source alternative \citep{wen_tinyvla_2025,shukor_smolvla_2025,budzianowski_edgevla_2025}. Speculative decoding and caching mechanisms exploit the sequential structure of token-based action interfaces for runtime reduction, with Spec-VLA reporting up to $3\times$ inference speedup through speculative action token generation \citep{wang_spec-vla_2025,wang_specprune-vla_2025,xu_vla-cache_2025,yu_ac2-vla_2026}. Runtime analyses treat inference cost as a first-class systems constraint, providing actionable guidance on latency-accuracy tradeoffs for specific robot platforms \citep{hancock_actions_2025,hancock_run-time_2025}. Action tokenization choices that trade fidelity for compute enable both faster training and lower-latency inference \citep{pertsch_fast_2025,xue_leverb_2025}.
+
+\subsubsection{Domain-Specific VLAs}
+\label{sec:taxonomy:vla-arch:domain}
+
+\textbf{Domain-specific VLAs} specialize architecture and data to a domain with distinctive dynamics and safety constraints. Driving VLAs emphasize long-horizon prediction under multi-agent interaction, rare-event robustness, and stringent safety requirements \citep{guo_vdrive_2025,li_drivevla-w0_2025,chi_impromptu_2025,seong_vla-r_2025,yuan_autodrive-r2_2025,xu_wam-diff_2025,hu_vision-language-action_2026,hao_driveaction_2025}. Humanoid and whole-body policies emphasize high-dimensional control and stability constraints \citep{jiang_wholebodyvla_2025,ding_humanoid-vla_2025}. Drone policies emphasize fast perception-control loops under viewpoint shift \citep{lykov_cognitivedrone_2025,serpiva_racevla_2025}. Medical and assistive robotics emphasize reliability and compliance \citep{li_robonurse-vla_2025,zhang_compliantvla-adaptor_2026}. Game/task automation emphasizes tool use and long-horizon reasoning in interactive environments \citep{li_jarvis-vla_2025,chen_combatvla_2026,wang_voyager_2023}.
+
+Driving-specific VLAs address safety-critical interactive forecasting with long-horizon prediction under multi-agent interaction: VDrive emphasizes safety-aware interaction modeling, while DriveVLA-W0 integrates world-model-guided prediction with driving-specific action spaces \citep{guo_vdrive_2025,li_drivevla-w0_2025,chi_impromptu_2025,seong_vla-r_2025,yuan_autodrive-r2_2025,hao_driveaction_2025}. Diffusion-style driving policies emphasize smooth long-horizon control under uncertainty, with WAM-Diff applying diffusion denoising to generate safe trajectory distributions \citep{xu_wam-diff_2025}. Humanoid and whole-body control VLAs such as WholeBodyVLA address high-dimensional stability constraints across dozens of joints, requiring specialized action representations that preserve balance during loco-manipulation \citep{jiang_wholebodyvla_2025,ding_humanoid-vla_2025}. Drone and racing VLAs emphasize fast control loops under aggressive viewpoint shift, with CognitiveDrone demonstrating outdoor navigation and RaceVLA targeting high-speed racing scenarios \citep{lykov_cognitivedrone_2025,serpiva_racevla_2025}. Medical and assistive VLAs such as RoboNurse-VLA emphasize compliance, trust, and safety as primary design constraints rather than task throughput \citep{li_robonurse-vla_2025,zhang_compliantvla-adaptor_2026}. Interactive and tool-augmented VLAs support long-horizon task execution through explicit tool use and memory, with JARVIS-VLA demonstrating complex tool-mediated manipulation chains \citep{li_jarvis-vla_2025,chen_combatvla_2026,zheng_jarvis_2025,zheng_x-vla_2025}.
+
+
+\subsection{Comprehensive Tables}
+\label{sec:taxonomy:tables}
+
+We provide landscape tables to make the taxonomy auditable and to support quick cross-paper lookup. Fields marked ``--'' indicate values not explicitly reported in the cited papers.
+
+% Reserve Table 1 for the cross-family comparison table (Section~\ref{sec:comparison}).
+\setcounter{table}{1}
+
+\clearpage
+\begin{landscape}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{xltabular}{\landscapewidth}{p{3.5cm}p{0.8cm}p{2.8cm}p{2.0cm}p{3.0cm}p{1.2cm}X p{1.3cm}}
+\caption{Foundation VLA models (Table~2): representative model families and implementation choices.}
+\label{tab:foundation-vla-models}\\
+\toprule
+Model & Year & Backbone VLM & Action Head & Taxonomy Class & Params & Key Benchmarks & Real-World \\
+\midrule
+\endfirsthead
+\toprule
+Model & Year & Backbone VLM & Action Head & Taxonomy Class & Params & Key Benchmarks & Real-World \\
+\midrule
+\endhead
+OpenVLA \citep{kim_openvla_2024} & 2024 & Llama-2 7B & token/AR & Hybrid pretrain-then-couple & 7B & 29 tasks; outperforms RT-2-X (55B) & Yes \\
+SARA-RT \citep{leal_sara-rt_2024} & 2024 & RT-2 backbone & token/AR & Foundation VLA policy & 55B & RT-2 tasks & Yes \\
+GR-2 \citep{cheang_gr-2_2024} & 2024 & custom VLM & diffusion & Foundation VLA policy & 2.6B & GR-series tasks & Yes \\
+Octo \citep{team_octo_2024} & 2024 & custom transformer & diffusion & Foundation VLA policy & 93M & 9 robot platforms; 800k trajs & Yes \\
+$\pi_{0.5}$ \citep{intelligence__05_2025} & 2025 & PaliGemma 2 3B & flow & Hybrid pretrain-then-couple & 3B & multi-robot dexterous & Yes \\
+$\pi^*_{0.6}$ (RECAP) \citep{intelligence__06_2025} & 2025 & PaliGemma 2 3B & flow & Decision-coupled refinement & 3B & $2\times$ throughput, $0.5\times$ failure & Yes \\
+$\pi_{0}$ \citep{black__0_2026} & 2026 & PaliGemma 3B & flow & Hybrid pretrain-then-couple & 3B & dexterous manipulation & Yes \\
+GR00T N1 \citep{nvidia_gr00t_2025} & 2025 & Eagle 2 VLM & dual-system & Foundation VLA policy & -- & humanoid loco-manipulation & Yes \\
+InternVLA-A1 \citep{cai_internvla-a1_2026} & 2026 & InternVL-2.5 & hybrid & Hybrid pretrain-then-couple & 2B & LIBERO, real-world & Yes \\
+FAST \citep{pertsch_fast_2025} & 2025 & any VLM & token/DCT & Efficiency-oriented (tokenization) & -- & $5\times$ training speedup & Yes \\
+VQ-VLA \citep{wang_vq-vla_2025} & 2025 & Qwen-2.5-VL & token/VQ & Tokenized action interface & 3B & +30\% long-horizon real-world & Yes \\
+Discrete Diffusion \citep{liang_discrete_2025} & 2025 & Qwen-2.5-VL & discrete diff. & Tokenized action interface & 3B & LIBERO 96.3\% & -- \\
+DexVLA \citep{wen_dexvla_2025} & 2025 & Qwen-2-VL 2B & diffusion & Dexterous manipulation VLA & 2B & bimanual dexterous & Yes \\
+FlowVLA \citep{zhong_flowvla_2025} & 2025 & Qwen-2-VL & flow & Flow action head & 2B & LIBERO, SimplerEnv & Yes \\
+HybridVLA \citep{liu_hybridvla_2025} & 2025 & Qwen-2-VL & hybrid AR+diff & Hybrid action interface & 2B & LIBERO, real-world & Yes \\
+EdgeVLA \citep{budzianowski_edgevla_2025} & 2025 & Qwen-2.5-VL 3B & token/AR & Small/edge VLA & 3B & real-time on edge & Yes \\
+TinyVLA \citep{wen_tinyvla_2025} & 2025 & SigLIP+Phi-2 & diffusion & Small/edge VLA & 1B & LIBERO, real-world & Yes \\
+SmolVLA \citep{shukor_smolvla_2025} & 2025 & SmolVLM & token/AR & Small/edge VLA & 0.5B & LIBERO & Yes \\
+VITA-VLA \citep{dong_vita-vla_2025} & 2025 & Qwen-2-VL & distilled & Distillation-based VLA & 2B & LIBERO 97.3\%, real 82\% & Yes \\
+RLINF-VLA \citep{zang_rlinf-vla_2025} & 2025 & Qwen-2-VL & token/AR & Decision-coupled RL & 3B & LIBERO 98.11\% (130 tasks) & Yes \\
+STARE-VLA \citep{xu_stare-vla_2025} & 2025 & Qwen-2-VL & token/AR & Decision-coupled RL & 3B & SimplerEnv 98.0\% & Yes \\
+ReinboT \citep{zhang_reinbot_2025} & 2025 & -- & token/AR & RL return prediction & -- & CALVIN SOTA & Yes \\
+HAMSTER \citep{li_hamster_2025} & 2025 & Qwen-2-VL & hierarchical & Hierarchical VLA & 7B & +20\% over OpenVLA & Yes \\
+\bottomrule
+\end{xltabular}
+\end{landscape}
+
+\clearpage
+\begin{landscape}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{xltabular}{\landscapewidth}{p{3.5cm}p{0.8cm}p{2.2cm}p{2.0cm}p{2.2cm}p{2.5cm}p{2.0cm}X}
+\caption{World model systems (Table~3): coupling, temporal, and spatial design choices.}
+\label{tab:world-model-systems}\\
+\toprule
+System & Year & Coupling & Temporal & Spatial & Architecture & Domain & Key Result (as reported) \\
+\midrule
+\endfirsthead
+\toprule
+System & Year & Coupling & Temporal & Spatial & Architecture & Domain & Key Result (as reported) \\
+\midrule
+\endhead
+Cosmos \citep{nvidia_cosmos_2025} & 2025 & general-purpose & hybrid & token/latent & platform WM & general & infrastructure view \\
+GigaWorld-0 \citep{team_gigaworld-0_2025} & 2025 & general-purpose & global & -- & generation engine & general & scalable data engine \\
+GigaBrain-0 \citep{team_gigabrain-0_2025} & 2025 & general-purpose & global & -- & generation engine & general & scalable data engine \\
+WorldVLA \citep{cen_worldvla_2025} & 2025 & decision-coupled & sequential & token/latent & joint action+future & manipulation & co-modeling benefit \\
+BridgeV2W \citep{chen_bridgev2w_2026} & 2026 & decision-coupled & hybrid & rendering-aware & embodiment masks & manipulation & better alignment \\
+WorldAgen \citep{wan_worldagen_2025} & 2025 & decision-coupled & global & -- & agentic generation & general & long-horizon rollouts \\
+ReWorld \citep{peng_reworld_2026} & 2026 & decision-coupled & hybrid & -- & WM-guided control & general & decision improvements \\
+FlowDreamer \citep{guo_flowdreamer_2026} & 2026 & decision-coupled & hybrid & flow/rendering & flow intermediate & manipulation & reduced mismatch \\
+WristWorld \citep{qian_wristworld_2025} & 2025 & decision-coupled & sequential & egocentric & video-conditioned & manipulation & stable egocentric prediction \\
+WMPO \citep{zhu_wmpo_2025} & 2025 & decision-coupled & sequential & -- & WM policy opt. & robotics & policy improvement \\
+VLA-Reasoner \citep{guo_vla-reasoner_2025} & 2025 & decision-coupled & hybrid & -- & WM + reasoning & general & planning quality \\
+Planning (WM-guided) \citep{chen_planning_2025} & 2025 & decision-coupled & hybrid & -- & planning augmentation & robotics & improved reliability \\
+World-Env \citep{xiao_world-env_2025} & 2025 & decision-coupled & global & -- & reward-conditioned & general & task-conditioned rollouts \\
+Aligning WM \citep{ren_aligning_2026} & 2026 & decision-coupled & global & -- & preference/reward & general & alignment focus \\
+Mechanistic \citep{wang_mechanistic_2026} & 2026 & general-purpose & global & structured & mechanistic prior & general & stronger physical consistency \\
+Semantic WM \citep{berg_semantic_2025} & 2025 & general-purpose & -- & semantic & structured latent & general & semantic consistency \\
+Motus \citep{bi_motus_2025} & 2025 & general-purpose & sequential & latent & latent dynamics & general & compact rollout \\
+Latent structured \citep{tharwat_latent_2025} & 2025 & general-purpose & -- & latent & latent-space WM & general & efficient dynamics \\
+Latent temporal \citep{tan_latent_2025} & 2025 & general-purpose & -- & latent & latent predictor & general & temporal modeling \\
+Flow WM \citep{lillemark_flow_2026} & 2026 & general-purpose & global & rendering-aware & flow WM & general & scalable generation \\
+GENIE (2025) \citep{liao_genie_2025} & 2025 & general-purpose & global & -- & foundation WM & general & broad transfer \\
+GENIE (2026) \citep{yin_genie_2026} & 2026 & general-purpose & global & -- & foundation WM & general & broad transfer \\
+WOW \citep{fan_wow_2026} & 2026 & general-purpose & global & -- & foundation WM & general & large-scale modeling \\
+Learning WM \citep{shah_learning_2026} & 2026 & decision-coupled & sequential & -- & WM for control & robotics & long-horizon control \\
+Digital WM \citep{zhou_digital_2026} & 2026 & decision-coupled & hybrid & -- & simulation-aligned & general & deployment relevance \\
+\bottomrule
+\end{xltabular}
+\end{landscape}
+
+\clearpage
+\begin{landscape}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{xltabular}{\landscapewidth}{p{3.5cm}p{0.8cm}p{2.5cm}p{2.5cm}p{3.0cm}X}
+\caption{Domain-specific and multi-modal VLAs (Table~4): specialization targets and sensing interfaces.}
+\label{tab:domain-multimodal-vla}\\
+\toprule
+Model & Year & Domain & Sensors & Key Architecture & Key Result \\
+\midrule
+\endfirsthead
+\toprule
+Model & Year & Domain & Sensors & Key Architecture & Key Result \\
+\midrule
+\endhead
+VDrive \citep{guo_vdrive_2025} & 2025 & driving & RGB(+map) & VLA for driving & safety-aware interaction modeling \\
+DriveVLA-W0 \citep{li_drivevla-w0_2025} & 2025 & driving & RGB & WM-guided driving & world-model-integrated driving \\
+Impromptu \citep{chi_impromptu_2025} & 2025 & driving & RGB & long-horizon VLA & long-horizon planning \\
+IRL-VLA \citep{jiang_irl-vla_2025} & 2025 & driving & RGB & inverse RL reward WM & 1st runner-up CVPR2025 Grand Challenge \\
+DriveAction \citep{hao_driveaction_2025} & 2025 & driving & RGB & action-driven benchmark & 16k QA pairs from 2.6k scenarios \\
+WholeBodyVLA \citep{jiang_wholebodyvla_2025} & 2025 & humanoid & RGB+proprio & whole-body control & high-DoF loco-manipulation \\
+Humanoid-VLA \citep{ding_humanoid-vla_2025} & 2025 & humanoid & RGB+proprio & humanoid VLA & stability-constrained control \\
+CognitiveDrone \citep{lykov_cognitivedrone_2025} & 2025 & drone & RGB & fast perception loop & outdoor navigation \\
+RoboNurse \citep{li_robonurse-vla_2025} & 2025 & medical & RGB & assistive VLA & safety and compliance focus \\
+UrbanVLA \citep{li_urbanvla_2025} & 2025 & urban nav. & RGB & route-conditioned VLA & +55\% over baselines on SocialNav \\
+NitroGen \citep{magne_nitrogen_2026} & 2026 & gaming & RGB & vision-action foundation & +52\% on unseen games (1000+ games) \\
+VLA-Touch \citep{bi_vla-touch_2025} & 2025 & manipulation & tactile+RGB & multimodal fusion & improved grasp under occlusion \\
+Tactile-VLA \citep{huang_tactile-vla_2025} & 2025 & manipulation & tactile+RGB & multimodal fusion & slip/contact detection \\
+ForceVLA \citep{yu_forcevla_2025} & 2025 & manipulation & force+RGB & multimodal fusion & reduced object damage \\
+Audio-VLA \citep{wei_audio-vla_2025} & 2025 & manipulation & audio+RGB & multimodal fusion & audio-disambiguated contact \\
+OmniVLA \citep{guo_omnivla_2025} & 2025 & multi-domain & multi-sensor & multimodal VLA & 84\% task success, sensor diversity \\
+DreamTacVLA \citep{ye_learning_2025} & 2025 & manipulation & tactile+RGB & tactile world model & up to 95\% on contact-rich tasks \\
+JARVIS-VLA \citep{li_jarvis-vla_2025} & 2025 & interactive & RGB+tools & tool-augmented & long-horizon tool-mediated chains \\
+\bottomrule
+\end{xltabular}
+\end{landscape}
+
+Having established the taxonomy axes, VLA architecture sub-families, and their representative implementations, we turn next to the data regimes and evaluation metrics that ground these systems in empirical evidence. The coupling, temporal, and spatial design choices catalogued here only become meaningful when measured against standardized benchmarks and deployment-relevant metrics---the subject of Section~\ref{sec:data-metrics}.

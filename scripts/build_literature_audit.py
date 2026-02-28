@@ -14,6 +14,13 @@ from pathlib import Path
 TIME_START = 2024
 TIME_END = 2026
 
+# Papers explicitly excluded by this survey (out-of-scope domain mismatch).
+# Keep this list small and auditable (see content/appendix_b_exclusion_audit.tex).
+MANUAL_EXCLUDE_KEYS = {
+    # Entries previously excluded have been removed from both bib files.
+    # This set is kept as a placeholder for future manual exclusions.
+}
+
 
 EMBODIED_TERMS = (
     "embodied",
@@ -234,17 +241,21 @@ def main() -> None:
         window_ok = in_window(year)
         embodied_support = any(term in text for term in ("embodied", "robot", "driving", "vla", "manipulation"))
 
-        is_in_scope = window_ok and (is_embodied or (is_world_model and embodied_support))
-        if year is None:
-            exclude_reason = "missing_year"
-        elif not window_ok:
-            exclude_reason = "out_of_window"
-        elif is_in_scope:
-            exclude_reason = ""
-        elif is_world_model:
-            exclude_reason = "world_model_not_embodied"
+        if e.cite_key in MANUAL_EXCLUDE_KEYS:
+            is_in_scope = False
+            exclude_reason = "manual_excluded"
         else:
-            exclude_reason = "not_embodied_related"
+            is_in_scope = window_ok and (is_embodied or (is_world_model and embodied_support))
+            if year is None:
+                exclude_reason = "missing_year"
+            elif not window_ok:
+                exclude_reason = "out_of_window"
+            elif is_in_scope:
+                exclude_reason = ""
+            elif is_world_model:
+                exclude_reason = "world_model_not_embodied"
+            else:
+                exclude_reason = "not_embodied_related"
 
         section_bucket = assign_bucket(text=text, title=title, is_world_model=is_world_model)
         priority_tier = "core" if ("survey" in title.lower() or is_world_model) else "supporting"
